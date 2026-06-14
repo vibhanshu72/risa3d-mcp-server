@@ -2,7 +2,7 @@
 
 > Connect Claude AI to your RISA-3D structural models using the Model Context Protocol (MCP).
 
-Built by a structural engineer, for structural engineers. This MCP server lets you talk to your `.r3d` files in plain English — no coding required after setup.
+Built by a structural engineer, for structural engineers. This MCP server lets you talk to your `.r3d` files in plain English, no coding required after setup.
 
 ---
 
@@ -18,7 +18,7 @@ Once connected, just point Claude at any `.r3d` file and start asking questions.
 
 ## 🔧 What Is This?
 
-MCP (Model Context Protocol) is an open standard that lets AI assistants like Claude connect to external tools and files. This server acts as a bridge between Claude Desktop and your RISA-3D models — Claude can read your `.r3d` files directly and answer questions about them in plain English.
+MCP (Model Context Protocol) is an open standard that lets AI assistants like Claude connect to external tools and files. This server acts as a bridge between Claude Desktop and your RISA-3D models. Claude can read your `.r3d` files directly and answer questions about them in plain English.
 
 No RISA-3D API is required. This works by reading RISA-3D's plain-text `.r3d` file format directly.
 
@@ -28,7 +28,7 @@ No RISA-3D API is required. This works by reading RISA-3D's plain-text `.r3d` fi
 
 Once connected, you can ask Claude things like:
 
-- *"Summarize this model — how many members, nodes, and load cases?"*
+- *"Summarize this model - how many members, nodes, and load cases?"*
 - *"List all the members and their section sizes"*
 - *"List all the nodes and their coordinates"*
 - *"Show me all the load combinations"*
@@ -123,7 +123,7 @@ cd C:\risa-mcp
 node index.js
 ```
 
-If you see a blinking cursor with no errors — it's working. Press **Ctrl+C** to stop it.
+If you see a blinking cursor with no errors, it's working. Press **Ctrl+C** to stop it.
 
 ---
 
@@ -219,7 +219,7 @@ A couple of non-obvious quirks in RISA's file format that this server handles, d
 
 1. **Fixed-width quoted fields.** Labels, types, and section sizes are stored as quote-padded strings, e.g. `"M14                             "`. A naive whitespace split breaks these into multiple phantom tokens. This server uses a quote-aware tokenizer that treats anything inside `"..."` (including internal spaces) as a single field.
 
-2. **Members reference nodes by position, not by label.** In `[.MEMBERS_MAIN_DATA]`, the i-node and j-node fields are **1-based indices into the order of the `[NODES]` list** — not the node's label string. For example, a member line containing `1 7` means "the 1st node listed" to "the 7th node listed," which might be `N5` and `N18`. This server resolves those indices against an ordered node array.
+2. **Members reference nodes by position, not by label.** In `[.MEMBERS_MAIN_DATA]`, the i-node and j-node fields are **1-based indices into the order of the `[NODES]` list**, not the node's label string. For example, a member line containing `1 7` means "the 1st node listed" to "the 7th node listed," which might be `N5` and `N18`. This server resolves those indices against an ordered node array.
 
 The member line format (after tokenizing) is:
 ```
@@ -250,9 +250,9 @@ Pull requests are welcome! If you work with RISA-3D and have ideas for new tools
 
 ## 👷 About
 
-Built by **Vibhanshu Mishra, PE** — Structural Engineer at AG&E Structural Engineers, Austin TX.
+Built by **Vibhanshu Mishra, PE**, Structural Engineer at AG&E Structural Engineers, Austin TX.
 
-Inspired by the SAP2000 MCP server project. If this helped you, feel free to connect on LinkedIn!
+Inspired by a friend's ETABS MCP server project. If this helped you, feel free to connect on LinkedIn!
 
 ---
 
