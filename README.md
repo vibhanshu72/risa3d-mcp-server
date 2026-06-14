@@ -186,6 +186,16 @@ Compare these two RISA-3D models and tell me what changed:
 "C:\path\to\model-v1.r3d" and "C:\path\to\model-v2.r3d"
 ```
 
+```
+Export a member schedule for this model:
+"C:\path\to\your\model.r3d"
+```
+
+```
+Run a QC check on this model:
+"C:\path\to\your\model.r3d"
+```
+
 ---
 
 ## 🛠️ Available Tools
@@ -193,11 +203,28 @@ Compare these two RISA-3D models and tell me what changed:
 | Tool | Description |
 |---|---|
 | `read_risa_model` | Reads a `.r3d` file and returns a summary (title, node count, member count, etc.) |
-| `list_members` | Lists all members with their labels, i/j nodes, and section shapes |
+| `list_members` | Lists all members with their label, type/category, section size, and resolved i/j node labels |
 | `list_nodes` | Lists all nodes with their X, Y, Z coordinates |
 | `list_load_combinations` | Lists all load combinations defined in the model |
 | `get_file_section` | Returns the raw contents of any named section in the file (e.g. NODES, MEMBERS, MATERIAL_PROPERTIES) |
-| `compare_risa_models` | Compares two `.r3d` files and reports differences in nodes, members, section sets, and load combinations |
+| `compare_risa_models` | Compares two `.r3d` files and reports differences in nodes, member sizes/connectivity, section sets, and load combinations |
+| `export_member_schedule` | Generates a member schedule (label, type, section size, nodes, length) as CSV text ready for Excel |
+| `qc_check_risa_model` | Checks a model for duplicate nodes, duplicate member labels, missing section sizes, zero-length members, and invalid node references |
+
+---
+
+## 🧩 Technical Notes on the `.r3d` Format
+
+A couple of non-obvious quirks in RISA's file format that this server handles, documented here in case you're extending it:
+
+1. **Fixed-width quoted fields.** Labels, types, and section sizes are stored as quote-padded strings, e.g. `"M14                             "`. A naive whitespace split breaks these into multiple phantom tokens. This server uses a quote-aware tokenizer that treats anything inside `"..."` (including internal spaces) as a single field.
+
+2. **Members reference nodes by position, not by label.** In `[.MEMBERS_MAIN_DATA]`, the i-node and j-node fields are **1-based indices into the order of the `[NODES]` list** — not the node's label string. For example, a member line containing `1 7` means "the 1st node listed" to "the 7th node listed," which might be `N5` and `N18`. This server resolves those indices against an ordered node array.
+
+The member line format (after tokenizing) is:
+```
+Label, Type (e.g. "Wide Flange", "Tube", "Channel", "None"), Size (e.g. "W14X22", "HSS8X8X10"), iNodeIndex, jNodeIndex, ...
+```
 
 ---
 
@@ -206,11 +233,11 @@ Compare these two RISA-3D models and tell me what changed:
 Future tools planned:
 
 - [x] Compare two models and summarize differences
+- [x] Generate member schedule as CSV/Excel
+- [x] QC checker for naming conventions and model standards
 - [ ] Detect overstressed members from results
-- [ ] Generate member schedule as Word or Excel
 - [ ] Modify member sizes and save updated model
 - [ ] Batch process multiple models in a folder
-- [ ] QC checker for naming conventions and model standards
 - [ ] Extract project info across all models in a project folder
 
 ---
@@ -225,7 +252,7 @@ Pull requests are welcome! If you work with RISA-3D and have ideas for new tools
 
 Built by **Vibhanshu Mishra, PE** — Structural Engineer at AG&E Structural Engineers, Austin TX.
 
-Inspired by the ETABS MCP server project from a friend. If this helped you, feel free to connect on LinkedIn!
+Inspired by the SAP2000 MCP server project. If this helped you, feel free to connect on LinkedIn!
 
 ---
 
