@@ -121,11 +121,20 @@ server.tool(
   }
 );
 
-// Tool 2: List all members in a .r3d file
+// Tool 2: List members - summary mode by default, full detail on request
+// mode: "summary" (default) returns type breakdown only (~50 tokens)
+// mode: "full" returns every member as CSV (~varies, use filterType to reduce)
+// filterType: optional e.g. "Tube", "Wide Flange", "Channel", "Angle", "None"
 server.tool(
   "list_members",
-  { filePath: z.string().describe("Full path to the .r3d file") },
-  async ({ filePath }) => {
+  {
+    filePath: z.string().describe("Full path to the .r3d file"),
+    mode: z.enum(["summary", "full"]).optional().default("summary")
+      .describe("summary (default) = type breakdown only; full = every member as CSV"),
+    filterType: z.string().optional()
+      .describe("Optional: filter full mode by type e.g. Tube, Wide Flange, Channel, Angle, None")
+  },
+  async ({ filePath, mode = "summary", filterType }) => {
     try {
       const content = fs.readFileSync(filePath, "utf8");
       const nodesOrdered = parseNodesOrdered(content);
@@ -139,19 +148,50 @@ server.tool(
         return { content: [{ type: "text", text: "No members found in this file." }] };
       }
 
-      const output = members.map(m => ({
-        label: m.label,
-        type: m.type,
-        size: m.size,
-        iNode: m.iNode || `(invalid index ${m.iNodeIndex})`,
-        jNode: m.jNode || `(invalid index ${m.jNodeIndex})`
-      }));
+      // ---- SUMMARY MODE (default, token-efficient) ----
+      if (mode === "summary") {
+        const typeCounts = {};
+        const unassigned = [];
+        members.forEach(m => {
+          const t = m.type || "Unknown";
+          typeCounts[t] = (typeCounts[t] || 0) + 1;
+          if (!m.size || m.size === "None" || m.size === "") unassigned.push(m.label);
+        });
+        const breakdown = Object.entries(typeCounts)
+          .sort((a, b) => b[1] - a[1])
+          .map(([t, c]) => `${c} ${t}`)
+          .join(", ");
+        const lines = [
+          `${members.length} members total: ${breakdown}.`,
+          unassigned.length > 0
+            ? `⚠ ${unassigned.length} member(s) with no section assigned: ${unassigned.join(", ")}`
+            : "All members have section assignments.",
+          `For full detail, call list_members with mode="full" (optionally add filterType e.g. "Tube").`
+        ];
+        return { content: [{ type: "text", text: lines.join("\n") }] };
+      }
+
+      // ---- FULL MODE (detailed, CSV) ----
+      let filtered = members;
+      if (filterType) {
+        const ft = filterType.toLowerCase();
+        filtered = members.filter(m => m.type.toLowerCase().includes(ft));
+        if (filtered.length === 0) {
+          return { content: [{ type: "text", text: `No members found with type matching "${filterType}". Available types: ${[...new Set(members.map(m => m.type))].join(", ")}` }] };
+        }
+      }
+
+      const rows = ["Label,Type,Size,iNode,jNode"];
+      filtered.forEach(m => {
+        rows.push(`${m.label},${m.type},${m.size},${m.iNode || "?"},${m.jNode || "?"}`);
+      });
+
+      const header = filterType
+        ? `${filtered.length} of ${members.length} members (filtered by type "${filterType}"):`
+        : `All ${filtered.length} members:`;
 
       return {
-        content: [{
-          type: "text",
-          text: `Found ${output.length} members:\n` + JSON.stringify(output, null, 2)
-        }]
+        content: [{ type: "text", text: `${header}\n\n` + rows.join("\n") }]
       };
     } catch (err) {
       return {
@@ -379,10 +419,18 @@ server.tool(
 );
 
 // Tool 7: Export member schedule as CSV
+// filterType: optional e.g. "Tube", "Wide Flange" - reduces output for large models
+// maxRows: optional cap (default 200) - prevents runaway token usage on huge models
 server.tool(
   "export_member_schedule",
-  { filePath: z.string().describe("Full path to the .r3d file") },
-  async ({ filePath }) => {
+  {
+    filePath: z.string().describe("Full path to the .r3d file"),
+    filterType: z.string().optional()
+      .describe("Optional: only include members of this type e.g. Tube, Wide Flange, Channel"),
+    maxRows: z.number().optional().default(200)
+      .describe("Max members to return (default 200). Use filterType to narrow results instead of raising this.")
+  },
+  async ({ filePath, filterType, maxRows = 200 }) => {
     try {
       const content = fs.readFileSync(filePath, "utf8");
       const nodesOrdered = parseNodesOrdered(content);
@@ -396,18 +444,37 @@ server.tool(
         return { content: [{ type: "text", text: "No members found in this file." }] };
       }
 
+      // Apply type filter if provided
+      let filtered = members;
+      if (filterType) {
+        const ft = filterType.toLowerCase();
+        filtered = members.filter(m => m.type.toLowerCase().includes(ft));
+        if (filtered.length === 0) {
+          return { content: [{ type: "text", text: `No members found with type matching "${filterType}". Available types: ${[...new Set(members.map(m => m.type))].join(", ")}` }] };
+        }
+      }
+
+      // Apply row cap
+      const capped = filtered.length > maxRows;
+      const toExport = capped ? filtered.slice(0, maxRows) : filtered;
+
       const rows = ["Label,Type,Size,iNode,jNode,Length(ft)"];
-      members.forEach(m => {
+      toExport.forEach(m => {
         const len = distance3D(m.iCoord, m.jCoord);
         const lengthStr = len !== null ? len.toFixed(2) : "N/A";
         rows.push(`${m.label},${m.type},${m.size},${m.iNode || "?"},${m.jNode || "?"},${lengthStr}`);
       });
 
+      const header = [
+        filterType
+          ? `Member Schedule — ${toExport.length} of ${members.length} members (filtered: "${filterType}")`
+          : `Member Schedule — ${toExport.length} of ${members.length} members`,
+        capped ? `⚠ Showing first ${maxRows} of ${filtered.length}. Use filterType to narrow results.` : null,
+        `Copy/paste CSV below into Excel (Data → Text to Columns, comma delimiter):`
+      ].filter(Boolean).join("\n");
+
       return {
-        content: [{
-          type: "text",
-          text: `Member Schedule (${members.length} members) - CSV format. Copy/paste this into Excel using Data > Text to Columns with comma delimiter, or save as a .csv file:\n\n` + rows.join("\n")
-        }]
+        content: [{ type: "text", text: `${header}\n\n` + rows.join("\n") }]
       };
     } catch (err) {
       return {
