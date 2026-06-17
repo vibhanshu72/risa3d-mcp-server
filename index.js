@@ -564,5 +564,330 @@ server.tool(
   }
 );
 
+
+// Tool 9: Get steel materials defined in the model
+server.tool(
+  "get_model_materials",
+  { filePath: z.string().describe("Full path to the .r3d file") },
+  async ({ filePath }) => {
+    try {
+      const content = fs.readFileSync(filePath, "utf8");
+
+      // Focus on HR steel materials (most relevant for misc steel work)
+      // Format: Label, E, G, Nu, Alpha, Weight, Fy, -1, Ry, Fu, Rt
+      const hrMatch = content.match(/\[\.HR_STEEL_MATERIAL\] <\d+>([\s\S]*?)\[\.END_HR_STEEL_MATERIAL\]/);
+      const cfMatch = content.match(/\[\.CF_STEEL_MATERIAL\] <\d+>([\s\S]*?)\[\.END_CF_STEEL_MATERIAL\]/);
+
+      const rows = ["Type,Grade,E(ksi),Fy(ksi),Fu(ksi)"];
+
+      if (hrMatch) {
+        hrMatch[1].trim().split("\n").filter(l => l.trim()).forEach(line => {
+          const t = tokenize(line);
+          const label = clean(t[0]);
+          const E = parseFloat(t[1]);
+          const Fy = parseFloat(t[6]);
+          const Fu = parseFloat(t[9]);
+          rows.push(`HR Steel,${label},${E},${Fy},${Fu}`);
+        });
+      }
+
+      if (cfMatch) {
+        cfMatch[1].trim().split("\n").filter(l => l.trim()).forEach(line => {
+          const t = tokenize(line);
+          const label = clean(t[0]);
+          const E = parseFloat(t[1]);
+          const Fy = parseFloat(t[6]);
+          const Fu = parseFloat(t[7]);
+          rows.push(`CF Steel,${label},${E},${Fy},${Fu}`);
+        });
+      }
+
+      if (rows.length === 1) {
+        return { content: [{ type: "text", text: "No steel materials found in this model." }] };
+      }
+
+      return {
+        content: [{ type: "text", text: `Steel materials defined in model (${rows.length - 1} total):\n\n` + rows.join("\n") }]
+      };
+    } catch (err) {
+      return { content: [{ type: "text", text: `Error: ${err.message}` }] };
+    }
+  }
+);
+
+// Tool 10: Get boundary conditions (support conditions at nodes)
+// RISA boundary condition codes: 4=Fixed, 0=Free, 1=Spring, 2=Slave, 3=Reaction
+// Format: nodeIndex, X, Y, Z, rotX, rotY, rotZ, ...
+server.tool(
+  "get_boundary_conditions",
+  { filePath: z.string().describe("Full path to the .r3d file") },
+  async ({ filePath }) => {
+    try {
+      const content = fs.readFileSync(filePath, "utf8");
+      const nodesOrdered = parseNodesOrdered(content);
+
+      const bcMatch = content.match(/\[BOUNDARY_CONDITIONS\] <\d+>([\s\S]*?)\[END_BOUNDARY_CONDITIONS\]/);
+      if (!bcMatch) {
+        return { content: [{ type: "text", text: "No boundary conditions found in this model." }] };
+      }
+
+      const codeLabel = (c) => {
+        const n = parseInt(c);
+        if (n === 4) return "Fixed";
+        if (n === 0) return "Free";
+        if (n === 1) return "Spring";
+        if (n === 2) return "Slave";
+        if (n === 3) return "Reaction";
+        return `Code${n}`;
+      };
+
+      const rows = ["NodeIndex,NodeLabel,X,Y,Z,RotX,RotY,RotZ,Description"];
+      bcMatch[1].trim().split("\n").filter(l => l.trim()).forEach(line => {
+        const parts = line.trim().split(/\s+/);
+        const nodeIdx = parseInt(parts[0]);
+        const nodeLabel = nodesOrdered[nodeIdx - 1] ? nodesOrdered[nodeIdx - 1].label : `(index ${nodeIdx})`;
+        const x = codeLabel(parts[1]);
+        const y = codeLabel(parts[2]);
+        const z = codeLabel(parts[3]);
+        const rx = codeLabel(parts[4]);
+        const ry = codeLabel(parts[5]);
+        const rz = codeLabel(parts[6]);
+
+        // Human-readable description
+        const allFixed = [x,y,z,rx,ry,rz].every(v => v === "Fixed");
+        const allFree = [x,y,z,rx,ry,rz].every(v => v === "Free");
+        const transFixed = [x,y,z].every(v => v === "Fixed");
+        const rotFree = [rx,ry,rz].every(v => v === "Free");
+
+        let desc = "";
+        if (allFixed) desc = "Fixed";
+        else if (allFree) desc = "Free";
+        else if (transFixed && rotFree) desc = "Pinned";
+        else if (x==="Fixed" && y==="Fixed" && z==="Fixed" && rx==="Free" && ry==="Free" && rz==="Fixed") desc = "Fixed-Z";
+        else desc = `${x}/${y}/${z} | ${rx}/${ry}/${rz}`;
+
+        rows.push(`${nodeIdx},${nodeLabel},${x},${y},${z},${rx},${ry},${rz},${desc}`);
+      });
+
+      return {
+        content: [{ type: "text", text: `Boundary conditions (${rows.length - 1} constrained nodes):\n\n` + rows.join("\n") }]
+      };
+    } catch (err) {
+      return { content: [{ type: "text", text: `Error: ${err.message}` }] };
+    }
+  }
+);
+
+// Tool 11: Get section sets and their assigned sizes
+// Format: Label, Type, Size, ...
+server.tool(
+  "get_section_sets",
+  { filePath: z.string().describe("Full path to the .r3d file") },
+  async ({ filePath }) => {
+    try {
+      const content = fs.readFileSync(filePath, "utf8");
+
+      const match = content.match(/\[\.HR_STEEL_SECTION_SETS\] <\d+>([\s\S]*?)\[\.END_HR_STEEL_SECTION_SETS\]/);
+      if (!match) {
+        return { content: [{ type: "text", text: "No hot-rolled steel section sets found in this model." }] };
+      }
+
+      const rows = ["SetName,Type,Size"];
+      match[1].trim().split("\n").filter(l => l.trim()).forEach(line => {
+        const t = tokenize(line);
+        rows.push(`${clean(t[0])},${clean(t[1])},${clean(t[2])}`);
+      });
+
+      return {
+        content: [{ type: "text", text: `Section sets (${rows.length - 1} total):\n\n` + rows.join("\n") }]
+      };
+    } catch (err) {
+      return { content: [{ type: "text", text: `Error: ${err.message}` }] };
+    }
+  }
+);
+
+// Tool 12: Summarize model for report/calculation package
+// Single call replacing 6+ separate tool calls.
+// Sections covered: project info, nodes, members, section sets, materials,
+// boundary conditions, load combos, area loads, distributed loads, point loads.
+// NOTE: Load case indices in load sections (e.g. 86, 88, 89, 90) are internal
+// RISA IDs. This tool builds a map from BASIC_LOAD_CASES (user-visible names)
+// and attempts to match — unmatched IDs are shown as LC{n}.
+server.tool(
+  "summarize_model_for_report",
+  { filePath: z.string().describe("Full path to the .r3d file") },
+  async ({ filePath }) => {
+    try {
+      const content = fs.readFileSync(filePath, "utf8");
+      const report = [];
+
+      // ---- PROJECT INFO ----
+      const titleMatch = content.match(/\[\.\.MODEL_TITLE\] <1>\s*\n([^\n]+)/);
+      const companyMatch = content.match(/\[\.\.COMPANY_NAME\] <1>\s*\n([^\n]+)/);
+      const designerMatch = content.match(/\[\.\.DESIGNER_NAME\] <1>\s*\n([^\n]+)/);
+      report.push("=== PROJECT ===");
+      report.push(`Title: ${titleMatch ? clean(titleMatch[1]) : "Unknown"}`);
+      report.push(`Company: ${companyMatch ? clean(companyMatch[1]) : "Unknown"}`);
+      report.push(`Designer: ${designerMatch ? clean(designerMatch[1]) : "Unknown"}`);
+
+      // ---- NODES ----
+      const nodesOrdered = parseNodesOrdered(content);
+      report.push(`\n=== NODES (${nodesOrdered.length} total) ===`);
+      const nodeCSV = ["Label,X,Y,Z"];
+      nodesOrdered.forEach(n => nodeCSV.push(`${n.label},${n.x},${n.y},${n.z}`));
+      report.push(nodeCSV.join("\n"));
+
+      // ---- MEMBERS ----
+      const members = parseMembersResolved(content, nodesOrdered);
+      const typeCounts = {};
+      members.forEach(m => { typeCounts[m.type] = (typeCounts[m.type] || 0) + 1; });
+      const breakdown = Object.entries(typeCounts).sort((a,b) => b[1]-a[1]).map(([t,c]) => `${c} ${t}`).join(", ");
+      report.push(`\n=== MEMBERS (${members.length} total: ${breakdown}) ===`);
+      const memberCSV = ["Label,Type,Size,iNode,jNode,Length(ft)"];
+      members.forEach(m => {
+        const len = distance3D(m.iCoord, m.jCoord);
+        memberCSV.push(`${m.label},${m.type},${m.size},${m.iNode||"?"},${m.jNode||"?"},${len!==null?len.toFixed(2):"N/A"}`);
+      });
+      report.push(memberCSV.join("\n"));
+
+      // ---- SECTION SETS ----
+      const setsMatch = content.match(/\[\.HR_STEEL_SECTION_SETS\] <\d+>([\s\S]*?)\[\.END_HR_STEEL_SECTION_SETS\]/);
+      report.push(`\n=== SECTION SETS ===`);
+      if (setsMatch) {
+        report.push("SetName,Type,Size");
+        setsMatch[1].trim().split("\n").filter(l => l.trim()).forEach(line => {
+          const t = tokenize(line);
+          report.push(`${clean(t[0])},${clean(t[1])},${clean(t[2])}`);
+        });
+      } else { report.push("None found."); }
+
+      // ---- STEEL MATERIALS ----
+      const hrMatch = content.match(/\[\.HR_STEEL_MATERIAL\] <\d+>([\s\S]*?)\[\.END_HR_STEEL_MATERIAL\]/);
+      report.push(`\n=== STEEL MATERIALS ===`);
+      if (hrMatch) {
+        report.push("Grade,E(ksi),Fy(ksi),Fu(ksi)");
+        hrMatch[1].trim().split("\n").filter(l => l.trim()).forEach(line => {
+          const t = tokenize(line);
+          report.push(`${clean(t[0])},${parseFloat(t[1])},${parseFloat(t[6])},${parseFloat(t[9])}`);
+        });
+      } else { report.push("None found."); }
+
+      // ---- BOUNDARY CONDITIONS ----
+      const bcMatch = content.match(/\[BOUNDARY_CONDITIONS\] <\d+>([\s\S]*?)\[END_BOUNDARY_CONDITIONS\]/);
+      report.push(`\n=== BOUNDARY CONDITIONS ===`);
+      if (bcMatch) {
+        const codeLabel = c => ({4:"Fixed",0:"Free",1:"Spring",2:"Slave",3:"Reaction"}[parseInt(c)] || `Code${c}`);
+        report.push("NodeLabel,X,Y,Z,RotX,RotY,RotZ,Description");
+        bcMatch[1].trim().split("\n").filter(l => l.trim()).forEach(line => {
+          const parts = line.trim().split(/\s+/);
+          const nodeIdx = parseInt(parts[0]);
+          const nodeLabel = nodesOrdered[nodeIdx-1] ? nodesOrdered[nodeIdx-1].label : `(idx ${nodeIdx})`;
+          const x=codeLabel(parts[1]),y=codeLabel(parts[2]),z=codeLabel(parts[3]);
+          const rx=codeLabel(parts[4]),ry=codeLabel(parts[5]),rz=codeLabel(parts[6]);
+          const allFixed = [x,y,z,rx,ry,rz].every(v=>v==="Fixed");
+          const transFixed = [x,y,z].every(v=>v==="Fixed");
+          const rotFree = [rx,ry,rz].every(v=>v==="Free");
+          const desc = allFixed ? "Fixed" : (transFixed&&rotFree ? "Pinned" : `${x}/${y}/${z}|${rx}/${ry}/${rz}`);
+          report.push(`${nodeLabel},${x},${y},${z},${rx},${ry},${rz},${desc}`);
+        });
+      } else { report.push("None found."); }
+
+      // ---- LOAD COMBINATIONS ----
+      const lcMatch = content.match(/\[LOAD_COMBINATIONS\] <\d+>([\s\S]*?)\[END_LOAD_COMBINATIONS\]/);
+      report.push(`\n=== LOAD COMBINATIONS ===`);
+      if (lcMatch) {
+        const lcLines = lcMatch[1].trim().split("\n").filter(l => l.trim());
+        const lcNames = lcLines.map(line => clean(tokenize(line)[0])).filter(n => n);
+        report.push(`Total: ${lcNames.length}`);
+        report.push(lcNames.join("\n"));
+      } else { report.push("None found."); }
+
+      // ---- BASIC LOAD CASES (for resolving internal load case IDs) ----
+      // Format: index "Name" ...
+      const blcMatch = content.match(/\[BASIC_LOAD_CASES\] <\d+>([\s\S]*?)\[END_BASIC_LOAD_CASES\]/);
+      const blcMap = {}; // 1-based index -> name
+      if (blcMatch) {
+        blcMatch[1].trim().split("\n").filter(l => l.trim()).forEach(line => {
+          const t = tokenize(line);
+          const idx = parseInt(t[0]);
+          const name = clean(t[1]);
+          if (!isNaN(idx) && name) blcMap[idx] = name;
+        });
+      }
+      const lcName = (idx) => blcMap[idx] ? blcMap[idx] : `LC${idx}`;
+
+      // ---- AREA LOADS ----
+      // Format: n1 n2 n3 n4 lcIdx direction magnitude ...
+      // direction: 1=Y(gravity down), 2=Z, 3=X
+      const areaMatch = content.match(/\[AREA_LOADS\] <\d+>([\s\S]*?)\[END_AREA_LOADS\]/);
+      report.push(`\n=== AREA LOADS ===`);
+      if (areaMatch) {
+        const areaLines = areaMatch[1].trim().split("\n").filter(l => l.trim());
+        report.push("Corners(N1-N2-N3-N4),LoadCase,Direction,Magnitude(ksf)");
+        areaLines.forEach(line => {
+          const parts = line.trim().replace(";","").split(/\s+/);
+          const corners = [0,1,2,3].map(i => {
+            const n = nodesOrdered[parseInt(parts[i])-1];
+            return n ? n.label : `(idx ${parts[i]})`;
+          }).join("-");
+          const lc = lcName(parseInt(parts[4]));
+          const dirCode = parseInt(parts[5]);
+          const dir = dirCode === 1 ? "Y(gravity)" : dirCode === 2 ? "Z" : dirCode === 3 ? "X" : `Dir${dirCode}`;
+          const mag = parseFloat(parts[6]);
+          report.push(`${corners},${lc},${dir},${mag}`);
+        });
+      } else { report.push("None found."); }
+
+      // ---- MEMBER DISTRIBUTED LOADS ----
+      // Format: memberIdx lcIdx startMag endMag startLoc endLoc direction ...
+      // memberIdx is 1-based positional index into members list
+      const distMatch = content.match(/\[DIRECT_DISTRIBUTED_LOADS\] <\d+>([\s\S]*?)\[END_DIRECT_DISTRIBUTED_LOADS\]/);
+      report.push(`\n=== MEMBER DISTRIBUTED LOADS ===`);
+      if (distMatch) {
+        const distLines = distMatch[1].trim().split("\n").filter(l => l.trim());
+        report.push("Member,LoadCase,StartMag(k/ft),EndMag(k/ft),StartLoc(ft),EndLoc(ft)");
+        distLines.forEach(line => {
+          const parts = line.trim().replace(";","").split(/\s+/);
+          const mIdx = parseInt(parts[0]);
+          const member = members[mIdx-1];
+          const mLabel = member ? member.label : `(idx ${mIdx})`;
+          const lc = lcName(parseInt(parts[1]));
+          const startMag = parseFloat(parts[2]);
+          const endMag = parseFloat(parts[3]);
+          const startLoc = parseFloat(parts[4]);
+          const endLoc = parseFloat(parts[5]);
+          report.push(`${mLabel},${lc},${startMag},${endMag},${startLoc},${endLoc}`);
+        });
+      } else { report.push("None found."); }
+
+      // ---- POINT / NODE LOADS ----
+      // Format: nodeIdx lcIdx magnitude direction ...
+      // direction code 76 = appears to be a combined direction flag in RISA
+      const ptMatch = content.match(/\[NODE_LOADS\] <\d+>([\s\S]*?)\[END_NODE_LOADS\]/);
+      report.push(`\n=== POINT LOADS (NODE LOADS) ===`);
+      if (ptMatch) {
+        const ptLines = ptMatch[1].trim().split("\n").filter(l => l.trim());
+        report.push("NodeLabel,LoadCase,Magnitude(k),DirectionCode");
+        ptLines.forEach(line => {
+          const parts = line.trim().replace(";","").split(/\s+/);
+          const nIdx = parseInt(parts[0]);
+          const nodeLabel = nodesOrdered[nIdx-1] ? nodesOrdered[nIdx-1].label : `(idx ${nIdx})`;
+          const lc = lcName(parseInt(parts[1]));
+          const mag = parseFloat(parts[2]);
+          const dir = parts[3]; // direction code (76 = X in RISA seismic convention)
+          report.push(`${nodeLabel},${lc},${mag},Dir${dir}`);
+        });
+      } else { report.push("None found."); }
+
+      return {
+        content: [{ type: "text", text: `MODEL REPORT\nFile: ${filePath}\n\n` + report.join("\n") }]
+      };
+    } catch (err) {
+      return { content: [{ type: "text", text: `Error: ${err.message}` }] };
+    }
+  }
+);
+
 const transport = new StdioServerTransport();
 await server.connect(transport);
