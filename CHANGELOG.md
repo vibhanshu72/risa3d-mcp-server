@@ -4,6 +4,15 @@ All notable changes to the RISA-3D MCP Server are documented here.
 
 ---
 
+## [1.2.0] - 2025-06
+
+### Added
+
+**Tool 13 -- `batch_summarize_folder`**
+Scans a folder for all `.r3d` files and returns a single CSV summary table with one row per model. Each row includes file name, model title, designer, node count, member count, section set count, load combination count, file size, and a quick QC status (flags unassigned sections and invalid node references). Optional `filterName` parameter to match only files whose name contains a specific string. Useful for project-wide QC and cross-model reporting across all stair or platform models in a project folder.
+
+---
+
 ## [1.1.0] - 2025-06
 
 ### Added
