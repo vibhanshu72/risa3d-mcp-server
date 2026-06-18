@@ -889,5 +889,104 @@ server.tool(
   }
 );
 
+
+// Tool 13: Batch summarize all .r3d files in a folder
+// Returns a CSV table with one row per model -- useful for project-wide QC
+// and reporting across multiple stair/platform models in a project folder.
+// Optional: filterName -- only include files whose name contains this string
+server.tool(
+  "batch_summarize_folder",
+  {
+    folderPath: z.string().describe("Full path to the folder containing .r3d files"),
+    filterName: z.string().optional()
+      .describe("Optional: only include files whose name contains this string (case-insensitive)")
+  },
+  async ({ folderPath, filterName }) => {
+    try {
+      // Read folder contents
+      let files;
+      try {
+        files = fs.readdirSync(folderPath);
+      } catch (e) {
+        return { content: [{ type: "text", text: `Cannot read folder: ${e.message}` }] };
+      }
+
+      // Filter to .r3d files only, apply optional name filter
+      let r3dFiles = files.filter(f => f.toLowerCase().endsWith(".r3d"));
+      if (filterName) {
+        r3dFiles = r3dFiles.filter(f => f.toLowerCase().includes(filterName.toLowerCase()));
+      }
+
+      if (r3dFiles.length === 0) {
+        const msg = filterName
+          ? `No .r3d files found in folder matching "${filterName}".`
+          : `No .r3d files found in folder: ${folderPath}`;
+        return { content: [{ type: "text", text: msg }] };
+      }
+
+      // CSV header
+      const rows = ["FileName,Title,Designer,Nodes,Members,SectionSets,LoadCombos,FileSizeKB,QCIssues"];
+
+      let errorCount = 0;
+
+      for (const fileName of r3dFiles) {
+        const filePath = folderPath.replace(/[\/]+$/, "") + "\\" + fileName;
+        try {
+          const content = fs.readFileSync(filePath, "utf8");
+
+          // Project info
+          const titleMatch = content.match(/\[\.\.MODEL_TITLE\] <1>\s*\n([^\n]+)/);
+          const designerMatch = content.match(/\[\.\.DESIGNER_NAME\] <1>\s*\n([^\n]+)/);
+          const title = titleMatch ? clean(titleMatch[1]) : "";
+          const designer = designerMatch ? clean(designerMatch[1]) : "";
+
+          // Counts from section headers
+          const nodeMatch = content.match(/\[NODES\] <(\d+)>/);
+          const memberMatch = content.match(/\[MEMBERS_MAIN_DATA\] <(\d+)>/);
+          const setsMatch = content.match(/\[\.HR_STEEL_SECTION_SETS\] <(\d+)>/);
+          const lcMatch = content.match(/\[LOAD_COMBINATIONS\] <(\d+)>/);
+
+          const nodeCount = nodeMatch ? parseInt(nodeMatch[1]) : 0;
+          const memberCount = memberMatch ? parseInt(memberMatch[1]) : 0;
+          const setsCount = setsMatch ? parseInt(setsMatch[1]) : 0;
+          const lcCount = lcMatch ? parseInt(lcMatch[1]) : 0;
+          const fileSizeKB = Math.round(fs.statSync(filePath).size / 1024);
+
+          // Quick QC -- check for unassigned members
+          const nodesOrdered = parseNodesOrdered(content);
+          const members = parseMembersResolved(content, nodesOrdered);
+          const unassigned = members.filter(m => !m.size || m.size === "None" || m.size === "").length;
+          const invalidRefs = members.filter(m => !m.iNode || !m.jNode).length;
+          const qcIssues = [];
+          if (unassigned > 0) qcIssues.push(`${unassigned} unassigned sections`);
+          if (invalidRefs > 0) qcIssues.push(`${invalidRefs} invalid node refs`);
+          const qcSummary = qcIssues.length > 0 ? qcIssues.join("; ") : "OK";
+
+          // Escape commas in text fields
+          const esc = (s) => s.includes(",") ? `"${s}"` : s;
+          rows.push(`${esc(fileName)},${esc(title)},${esc(designer)},${nodeCount},${memberCount},${setsCount},${lcCount},${fileSizeKB},${esc(qcSummary)}`);
+
+        } catch (fileErr) {
+          rows.push(`${fileName},ERROR,,,,,,,"${fileErr.message.replace(/"/g, "'")}"`);
+          errorCount++;
+        }
+      }
+
+      const summary = [
+        `Folder: ${folderPath}`,
+        `Models found: ${r3dFiles.length}${filterName ? ` (filtered by "${filterName}")` : ""}`,
+        errorCount > 0 ? `Files with errors: ${errorCount}` : null,
+        ``,
+        rows.join("\n")
+      ].filter(l => l !== null).join("\n");
+
+      return { content: [{ type: "text", text: summary }] };
+
+    } catch (err) {
+      return { content: [{ type: "text", text: `Error: ${err.message}` }] };
+    }
+  }
+);
+
 const transport = new StdioServerTransport();
 await server.connect(transport);
