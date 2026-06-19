@@ -4,6 +4,21 @@ All notable changes to the RISA-3D MCP Server are documented here.
 
 ---
 
+## [1.3.0] - 2025-06
+
+### Added
+
+**Tool 14 -- `get_load_cases`**
+Lists all basic load cases defined in the model with their 1-based index, name, and load type (Gravity, Seismic, Wind, etc.). Useful for cross-referencing load case indices that appear in the load sections of the model. Complements the existing `list_load_combinations` tool (Tool 4) which covers factored combinations.
+
+**Tool 15 -- `find_members_by_section`**
+Returns all members assigned a specific section size. Accepts partial, case-insensitive matches so `"hss8"` will match `"HSS8X8X10"`. If no match is found, lists all section sizes present in the model so you can correct the query. Useful for verifying section assignments and identifying which members will be affected before making a section change.
+
+**Tool 16 -- `get_deflection_limits`**
+Returns the deflection limit ratios (L/240, L/360, etc.) from both the global deflection rules and the per-member deflection rules. Categories covered: DL, LL, TL, and cantilever variants. Shows "Not checked" for any category set to -1 in the model. Useful for peer review and design narrative documentation.
+
+---
+
 ## [1.2.0] - 2025-06
 
 ### Added
