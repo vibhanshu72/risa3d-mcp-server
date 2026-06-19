@@ -988,5 +988,167 @@ server.tool(
   }
 );
 
+
+// Tool 14: Get basic load cases
+// Returns index, name, and load type for each basic load case defined in the model.
+// Load type codes: 0=Gravity, 14=Seismic, others=Wind/Notional/Transient
+server.tool(
+  "get_load_cases",
+  { filePath: z.string().describe("Full path to the .r3d file") },
+  async ({ filePath }) => {
+    try {
+      const content = fs.readFileSync(filePath, "utf8");
+
+      const blcMatch = content.match(/\[BASIC_LOAD_CASES\] <\d+>([\s\S]*?)\[END_BASIC_LOAD_CASES\]/);
+      if (!blcMatch) {
+        return { content: [{ type: "text", text: "No basic load cases found in this model." }] };
+      }
+
+      // Load type code -> human readable
+      const typeLabel = (code) => {
+        const n = parseInt(code);
+        if (n === 0) return "Gravity";
+        if (n === 14) return "Seismic";
+        if (n === 1 || n === 2) return "Wind";
+        if (n === 3) return "Notional";
+        return `Type${n}`;
+      };
+
+      const rows = ["Index,Name,LoadType"];
+      blcMatch[1].trim().split("\n").filter(l => l.trim()).forEach(line => {
+        const t = tokenize(line);
+        const idx = t[0];
+        const name = clean(t[1]);
+        // Field 3 (t[2]) is the primary load type code
+        const ltype = typeLabel(t[2]);
+        rows.push(`${idx},${name},${ltype}`);
+      });
+
+      return {
+        content: [{
+          type: "text",
+          text: `Basic load cases (${rows.length - 1} total):\n\n` + rows.join("\n")
+        }]
+      };
+    } catch (err) {
+      return { content: [{ type: "text", text: `Error: ${err.message}` }] };
+    }
+  }
+);
+
+// Tool 15: Find members by section size
+// Returns all members assigned a specific section size (e.g. "HSS8X8X10", "C15X33.9")
+// Case-insensitive partial match -- "hss8" will match "HSS8X8X10"
+server.tool(
+  "find_members_by_section",
+  {
+    filePath: z.string().describe("Full path to the .r3d file"),
+    sectionSize: z.string().describe("Section size to search for e.g. HSS8X8X10, W14X22, C15X33.9. Partial match accepted.")
+  },
+  async ({ filePath, sectionSize }) => {
+    try {
+      const content = fs.readFileSync(filePath, "utf8");
+      const nodesOrdered = parseNodesOrdered(content);
+      const members = parseMembersResolved(content, nodesOrdered);
+
+      if (members.length === 0) {
+        return { content: [{ type: "text", text: "No members found in this model." }] };
+      }
+
+      const query = sectionSize.toLowerCase();
+      const matched = members.filter(m => m.size.toLowerCase().includes(query));
+
+      if (matched.length === 0) {
+        const allSizes = [...new Set(members.map(m => m.size))].sort().join(", ");
+        return {
+          content: [{
+            type: "text",
+            text: `No members found with section matching "${sectionSize}".\nSizes in this model: ${allSizes}`
+          }]
+        };
+      }
+
+      const rows = ["Label,Type,Size,iNode,jNode,Length(ft)"];
+      matched.forEach(m => {
+        const len = distance3D(m.iCoord, m.jCoord);
+        rows.push(`${m.label},${m.type},${m.size},${m.iNode||"?"},${m.jNode||"?"},${len!==null?len.toFixed(2):"N/A"}`);
+      });
+
+      return {
+        content: [{
+          type: "text",
+          text: `${matched.length} of ${members.length} members use section matching "${sectionSize}":\n\n` + rows.join("\n")
+        }]
+      };
+    } catch (err) {
+      return { content: [{ type: "text", text: `Error: ${err.message}` }] };
+    }
+  }
+);
+
+// Tool 16: Get deflection limits
+// Returns the deflection rules (L/n ratios) defined in the model.
+// -1 means "not checked" for that category.
+// Two rule sets: global DEFLECTION_RULES and per-member MEMBER_DEFLECTION_RULES
+server.tool(
+  "get_deflection_limits",
+  { filePath: z.string().describe("Full path to the .r3d file") },
+  async ({ filePath }) => {
+    try {
+      const content = fs.readFileSync(filePath, "utf8");
+      const report = [];
+
+      // Field order for both rule types:
+      // Name, DL_limit, LL_limit, TL_limit, LL_cantilever, TL_cantilever, DL_cantilever, ...
+      const parseRule = (line) => {
+        const t = tokenize(line);
+        const name = clean(t[0]);
+        const fmt = (v) => parseFloat(v) < 0 ? "Not checked" : `L/${parseFloat(v).toFixed(0)}`;
+        return {
+          name,
+          dl: fmt(t[1]),
+          ll: fmt(t[2]),
+          tl: fmt(t[3]),
+          ll_cant: fmt(t[4]),
+          tl_cant: fmt(t[5]),
+          dl_cant: fmt(t[6])
+        };
+      };
+
+      // Global deflection rules
+      const globalMatch = content.match(/\[\.DEFLECTION_RULES\] <\d+>([\s\S]*?)\[\.END_DEFLECTION_RULES\]/);
+      report.push("=== GLOBAL DEFLECTION RULES ===");
+      report.push("Rule,DL,LL,TL,LL(Cantilever),TL(Cantilever),DL(Cantilever)");
+      if (globalMatch) {
+        globalMatch[1].trim().split("\n").filter(l => l.trim()).forEach(line => {
+          const r = parseRule(line);
+          report.push(`${r.name},${r.dl},${r.ll},${r.tl},${r.ll_cant},${r.tl_cant},${r.dl_cant}`);
+        });
+      } else {
+        report.push("None found.");
+      }
+
+      // Member-level deflection rules
+      const memberMatch = content.match(/\[\.MEMBER_DEFLECTION_RULES\] <\d+>([\s\S]*?)\[\.END_MEMBER_DEFLECTION_RULES\]/);
+      report.push("\n=== MEMBER DEFLECTION RULES ===");
+      report.push("Rule,DL,LL,TL,LL(Cantilever),TL(Cantilever),DL(Cantilever)");
+      if (memberMatch) {
+        memberMatch[1].trim().split("\n").filter(l => l.trim()).forEach(line => {
+          const r = parseRule(line);
+          report.push(`${r.name},${r.dl},${r.ll},${r.tl},${r.ll_cant},${r.tl_cant},${r.dl_cant}`);
+        });
+      } else {
+        report.push("None found.");
+      }
+
+      return {
+        content: [{ type: "text", text: report.join("\n") }]
+      };
+    } catch (err) {
+      return { content: [{ type: "text", text: `Error: ${err.message}` }] };
+    }
+  }
+);
+
 const transport = new StdioServerTransport();
 await server.connect(transport);
