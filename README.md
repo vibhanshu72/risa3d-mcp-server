@@ -238,6 +238,16 @@ What are the deflection limits set in this model?
 "C:\path\to\your\model.r3d"
 ```
 
+```
+Change the Stringer section set from C15X33.9 to C12X20.7 and save as a new model:
+"C:\path\to\your\model.r3d" -> "C:\path\to\your\model-revised.r3d"
+```
+
+```
+Clone this model with member M41 changed to HSS6X6X10 and node N5 changed to pinned, save as a new file:
+"C:\path\to\your\model.r3d" -> "C:\path\to\your\model-v2.r3d"
+```
+
 ---
 
 ## Available Tools
@@ -260,6 +270,8 @@ What are the deflection limits set in this model?
 | `get_load_cases` | Lists all basic load cases defined in the model with their index, name, and load type (Gravity, Seismic, Wind, etc.) |
 | `find_members_by_section` | Returns all members assigned a specific section size. Accepts partial, case-insensitive matches (e.g. `"hss8"` matches `"HSS8X8X10"`). If no match, lists all sizes in the model. |
 | `get_deflection_limits` | Returns the deflection limit ratios (L/240, L/360, etc.) defined in both the global deflection rules and member deflection rules. Shows "Not checked" for any category set to -1. |
+| `modify_section_set` | Changes a section size and saves a NEW `.r3d` file (never overwrites the original). Can change the section set definition, specific member assignments, or both. Optional `setName` or `memberLabel` to narrow the change to a single set or member. |
+| `clone_model_with_changes` | Saves a copy of the model with one or more changes applied: section sizes, boundary conditions, and member distributed load magnitudes. Always writes to a new file. Useful for parametric studies and what-if comparisons. |
 
 ---
 
@@ -300,7 +312,8 @@ Label, Type (e.g. "Wide Flange", "Tube", "Channel", "None"), Size (e.g. "W14X22"
 - [x] Get basic load cases with load type classification
 - [x] Find all members using a specific section size
 - [x] Get deflection limit rules (global and per-member)
-- [ ] Modify member section sizes and save updated model
+- [x] Modify member section sizes and save updated model
+- [x] Clone a model with section, boundary condition, and load changes applied
 
 ---
 
