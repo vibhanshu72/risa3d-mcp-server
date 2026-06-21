@@ -72,7 +72,7 @@ Open Command Prompt and run these one at a time:
 mkdir C:\risa-mcp
 cd C:\risa-mcp
 npm init -y
-npm install @modelcontextprotocol/sdk zod
+npm install @modelcontextprotocol/sdk zod xlsx
 ```
 
 ---
@@ -248,6 +248,21 @@ Clone this model with member M41 changed to HSS6X6X10 and node N5 changed to pin
 "C:\path\to\your\model.r3d" -> "C:\path\to\your\model-v2.r3d"
 ```
 
+```
+Give me a material takeoff for this model:
+"C:\path\to\your\model.r3d"
+```
+
+```
+Flag any members over 20 feet for unbraced length review:
+"C:\path\to\your\model.r3d"
+```
+
+```
+Export the member schedule to an Excel file:
+"C:\path\to\your\model.r3d" -> "C:\Users\you\Desktop\schedule.xlsx"
+```
+
 ---
 
 ## Available Tools
@@ -268,10 +283,14 @@ Clone this model with member M41 changed to HSS6X6X10 and node N5 changed to pin
 | `summarize_model_for_report` | Single-call summary combining project info, nodes, members, section sets, materials, boundary conditions, load combinations, area loads, distributed loads, and point loads -- ready to paste into a calculation package |
 | `batch_summarize_folder` | Scans a folder for all `.r3d` files and returns a CSV summary table (file name, title, designer, node count, member count, section sets, load combos, file size, QC status). Optional `filterName` parameter to match specific file names. |
 | `get_load_cases` | Lists all basic load cases defined in the model with their index, name, and load type (Gravity, Seismic, Wind, etc.) |
-| `find_members_by_section` | Returns all members assigned a specific section size. Accepts partial, case-insensitive matches (e.g. `"hss8"` matches `"HSS8X8X10"`). If no match, lists all sizes in the model. |
+| `find_members_by_section` | Returns all members assigned a specific section size. Accepts partial, case-insensitive matches (e.g. `"hss8"` matches `"HSS8X8X10"`). If no match, it lists all sizes in the model. |
 | `get_deflection_limits` | Returns the deflection limit ratios (L/240, L/360, etc.) defined in both the global deflection rules and member deflection rules. Shows "Not checked" for any category set to -1. |
 | `modify_section_set` | Changes a section size and saves a NEW `.r3d` file (never overwrites the original). Can change the section set definition, specific member assignments, or both. Optional `setName` or `memberLabel` to narrow the change to a single set or member. |
 | `clone_model_with_changes` | Saves a copy of the model with one or more changes applied: section sizes, boundary conditions, and member distributed load magnitudes. Always writes to a new file. Useful for parametric studies and what-if comparisons. |
+| `get_material_takeoff` | Returns total weight by section size and a grand total, calculated from AISC shape designations (W/C shapes: number after the X is lb/ft) plus a lookup table for HSS and angle shapes. Sizes not in the table are flagged as unknown rather than guessed, and excluded from the total. |
+| `find_unbraced_length_issues` | Flags members longer than a threshold (default 15 ft, adjustable) for manual review. This is a length screen only -- it does NOT calculate KL/r, apply K-factors, or account for intermediate brace points. Intended to surface candidates for engineering judgment, not to replace it. |
+| `export_member_schedule_to_excel` | Writes the member schedule directly to a real `.xlsx` file at a path you specify, instead of returning CSV text to copy-paste. |
+| `batch_summarize_folder_to_excel` | Writes the batch folder summary directly to a real `.xlsx` file. Same data as `batch_summarize_folder`, saved as an actual spreadsheet. |
 
 ---
 
@@ -314,6 +333,9 @@ Label, Type (e.g. "Wide Flange", "Tube", "Channel", "None"), Size (e.g. "W14X22"
 - [x] Get deflection limit rules (global and per-member)
 - [x] Modify member section sizes and save updated model
 - [x] Clone a model with section, boundary condition, and load changes applied
+- [x] Material takeoff with AISC shape weights
+- [x] Length-based screen for unbraced length review
+- [x] Direct .xlsx export (member schedule and batch summary)
 
 ---
 
