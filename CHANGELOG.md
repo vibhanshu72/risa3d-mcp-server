@@ -4,6 +4,26 @@ All notable changes to the RISA-3D MCP Server are documented here.
 
 ---
 
+## [1.5.0] - 2025-06
+
+### Added
+
+**New dependency: `xlsx` package.** Tools 21 and 22 require the `xlsx` npm package. Run `npm install xlsx` in the `C:\risa-mcp` folder before using these two tools (existing installs need this one-time step; the README install instructions now include it for new setups).
+
+**Tool 19 -- `get_material_takeoff`**
+Returns total weight by section size and a grand total across the model. Weight per foot for Wide Flange and Channel shapes is read directly from the AISC designation (the number after the X, e.g. W14X22 = 22 lb/ft). HSS and angle shapes use an embedded lookup table since their designation describes dimensions, not weight. Any size not in the table is flagged as unknown and excluded from the total rather than guessed, to avoid silently wrong tonnage. The lookup table can be extended in index.js as new sizes come up.
+
+**Tool 20 -- `find_unbraced_length_issues`**
+Flags members longer than a configurable threshold (default 15 ft) for manual review. This is explicitly a length screen, not a slenderness or KL/r calculation -- it does not apply K-factors, account for intermediate brace points, or make a pass/fail determination. Output frames flagged members as candidates for engineering judgment, consistent with preferring manual review for anything requiring project-specific context.
+
+**Tool 21 -- `export_member_schedule_to_excel`**
+Writes the member schedule directly to a real `.xlsx` file at a specified output path, removing the manual copy-paste and Text-to-Columns step previously required after `export_member_schedule`.
+
+**Tool 22 -- `batch_summarize_folder_to_excel`**
+Same data as `batch_summarize_folder`, written directly to a real `.xlsx` file instead of returned as CSV text.
+
+---
+
 ## [1.4.0] - 2025-06
 
 ### Added
