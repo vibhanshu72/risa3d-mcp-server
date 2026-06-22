@@ -278,6 +278,22 @@ Export this model to SAF format for use in SCIA Engineer:
 "C:\path\to\your\model.r3d" -> "C:\Users\you\Desktop\model.xlsx"
 ```
 
+```
+Check this model for duplicate nodes:
+"C:\path\to\your\model.r3d"
+```
+
+```
+Replace C15X33.9 with C12X20.7 across all models in this folder:
+"D:\Projects\2026\MyProject\Design"
+```
+
+```
+Show me what changed between these two model versions:
+base: "C:\path\to\model-v1.r3d"
+revised: "C:\path\to\model-v2.r3d"
+```
+
 ---
 
 ## Available Tools
@@ -308,6 +324,9 @@ Export this model to SAF format for use in SCIA Engineer:
 | `batch_summarize_folder_to_excel` | Writes the batch folder summary directly to a real `.xlsx` file. Same data as `batch_summarize_folder`, saved as an actual spreadsheet. |
 | `add_member` | Adds a new member to the model and saves a NEW `.r3d` file. Connects to two existing nodes (by label) or creates new nodes at given coordinates, always appended to the end of the model so no existing member's node references shift. Clones the field structure from an existing member of the same type to avoid guessing internal RISA codes. Requires at least one existing member of the target type already in the model. |
 | `export_to_saf` | Exports a RISA-3D model to SAF format (`.xlsx`), the open exchange standard used by SCIA Engineer, SOFiSTiK, AxisVM, and other structural analysis software. Produces five sheets: StructuralMaterial, StructuralCrossSection, StructuralPointConnection, StructuralCurveMember, StructuralPointSupport, plus a NOTES sheet documenting two key limitations: (1) coordinates are converted from feet to meters, and (2) RISA's Y-vertical axis is NOT swapped to Z-vertical -- the receiving engineer must handle axis orientation. Loads are not included in this export. |
+| `find_duplicate_nodes` | Scans all nodes for pairs with nearly identical coordinates (default tolerance 0.001 ft, ~0.3mm). Duplicate nodes cause members to appear connected when they aren't, or produce zero-length members that silently corrupt analysis results. Flags pairs by label with exact distance and coordinates. |
+| `replace_section_size_in_folder` | Replaces a section size string across every `.r3d` file in a folder, saving each as a new file with a configurable suffix (never overwrites originals). Useful for applying a spec change across an entire project folder at once. Reports how many replacements were made per file, and skips files with no matches. |
+| `compare_risa_models` | Diffs two `.r3d` files and reports exactly what changed: nodes added, removed, or moved; members added, removed, or changed (size, type, or connectivity); section sets added, removed, or resized; and load combination count changes. Useful for tracking design iterations and documenting changes between submittals. |
 
 ---
 
@@ -355,6 +374,9 @@ Label, Type (e.g. "Wide Flange", "Tube", "Channel", "None"), Size (e.g. "W14X22"
 - [x] Direct .xlsx export (member schedule and batch summary)
 - [x] Add new members (braces, posts, etc.) connecting existing or new nodes
 - [x] Export to SAF format (.xlsx) for import into SCIA, SOFiSTiK, AxisVM, and other SAF-compatible software
+- [x] Detect duplicate nodes (coordinate tolerance scan)
+- [x] Replace section size globally across a folder of models
+- [x] Diff two model versions (nodes, members, section sets, load combinations)
 
 ---
 
