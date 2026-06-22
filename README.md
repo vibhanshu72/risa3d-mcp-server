@@ -263,6 +263,21 @@ Export the member schedule to an Excel file:
 "C:\path\to\your\model.r3d" -> "C:\Users\you\Desktop\schedule.xlsx"
 ```
 
+```
+Add a brace between N5 and N6 using HSS4X4X4, save as a new model:
+"C:\path\to\your\model.r3d" -> "C:\path\to\your\model-braced.r3d"
+```
+
+```
+Add a new HSS4X4X4 brace from node N44 to a new point at (6.0, 0.0, -12.0), save as a new model:
+"C:\path\to\your\model.r3d" -> "C:\path\to\your\model-braced.r3d"
+```
+
+```
+Export this model to SAF format for use in SCIA Engineer:
+"C:\path\to\your\model.r3d" -> "C:\Users\you\Desktop\model.xlsx"
+```
+
 ---
 
 ## Available Tools
@@ -283,7 +298,7 @@ Export the member schedule to an Excel file:
 | `summarize_model_for_report` | Single-call summary combining project info, nodes, members, section sets, materials, boundary conditions, load combinations, area loads, distributed loads, and point loads -- ready to paste into a calculation package |
 | `batch_summarize_folder` | Scans a folder for all `.r3d` files and returns a CSV summary table (file name, title, designer, node count, member count, section sets, load combos, file size, QC status). Optional `filterName` parameter to match specific file names. |
 | `get_load_cases` | Lists all basic load cases defined in the model with their index, name, and load type (Gravity, Seismic, Wind, etc.) |
-| `find_members_by_section` | Returns all members assigned a specific section size. Accepts partial, case-insensitive matches (e.g. `"hss8"` matches `"HSS8X8X10"`). If no match, it lists all sizes in the model. |
+| `find_members_by_section` | Returns all members assigned a specific section size. Accepts partial, case-insensitive matches (e.g. `"hss8"` matches `"HSS8X8X10"`). If no match, lists all sizes in the model. |
 | `get_deflection_limits` | Returns the deflection limit ratios (L/240, L/360, etc.) defined in both the global deflection rules and member deflection rules. Shows "Not checked" for any category set to -1. |
 | `modify_section_set` | Changes a section size and saves a NEW `.r3d` file (never overwrites the original). Can change the section set definition, specific member assignments, or both. Optional `setName` or `memberLabel` to narrow the change to a single set or member. |
 | `clone_model_with_changes` | Saves a copy of the model with one or more changes applied: section sizes, boundary conditions, and member distributed load magnitudes. Always writes to a new file. Useful for parametric studies and what-if comparisons. |
@@ -291,6 +306,8 @@ Export the member schedule to an Excel file:
 | `find_unbraced_length_issues` | Flags members longer than a threshold (default 15 ft, adjustable) for manual review. This is a length screen only -- it does NOT calculate KL/r, apply K-factors, or account for intermediate brace points. Intended to surface candidates for engineering judgment, not to replace it. |
 | `export_member_schedule_to_excel` | Writes the member schedule directly to a real `.xlsx` file at a path you specify, instead of returning CSV text to copy-paste. |
 | `batch_summarize_folder_to_excel` | Writes the batch folder summary directly to a real `.xlsx` file. Same data as `batch_summarize_folder`, saved as an actual spreadsheet. |
+| `add_member` | Adds a new member to the model and saves a NEW `.r3d` file. Connects to two existing nodes (by label) or creates new nodes at given coordinates, always appended to the end of the model so no existing member's node references shift. Clones the field structure from an existing member of the same type to avoid guessing internal RISA codes. Requires at least one existing member of the target type already in the model. |
+| `export_to_saf` | Exports a RISA-3D model to SAF format (`.xlsx`), the open exchange standard used by SCIA Engineer, SOFiSTiK, AxisVM, and other structural analysis software. Produces five sheets: StructuralMaterial, StructuralCrossSection, StructuralPointConnection, StructuralCurveMember, StructuralPointSupport, plus a NOTES sheet documenting two key limitations: (1) coordinates are converted from feet to meters, and (2) RISA's Y-vertical axis is NOT swapped to Z-vertical -- the receiving engineer must handle axis orientation. Loads are not included in this export. |
 
 ---
 
@@ -336,6 +353,8 @@ Label, Type (e.g. "Wide Flange", "Tube", "Channel", "None"), Size (e.g. "W14X22"
 - [x] Material takeoff with AISC shape weights
 - [x] Length-based screen for unbraced length review
 - [x] Direct .xlsx export (member schedule and batch summary)
+- [x] Add new members (braces, posts, etc.) connecting existing or new nodes
+- [x] Export to SAF format (.xlsx) for import into SCIA, SOFiSTiK, AxisVM, and other SAF-compatible software
 
 ---
 
