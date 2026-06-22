@@ -4,6 +4,52 @@ All notable changes to the RISA-3D MCP Server are documented here.
 
 ---
 
+## [1.7.0] - 2025-06
+
+### Added
+
+**Tool 24 -- `export_to_saf`**
+Exports a RISA-3D model to SAF (Structural Analysis Format), the open Excel-based exchange standard developed by the Nemetschek Group. SAF is supported by SCIA Engineer, SOFiSTiK, AxisVM, Dlubal RFEM, and a growing list of structural analysis software. This tool reads the `.r3d` file directly and produces a compliant `.xlsx` file without requiring RISA to be open.
+
+Five sheets are produced: StructuralMaterial (steel material properties in SI units), StructuralCrossSection (one row per named section set), StructuralPointConnection (all nodes with coordinates converted to meters), StructuralCurveMember (all members with node references and cross-section assignments), and StructuralPointSupport (boundary conditions mapped to SAF Fixed/Free per DOF). A sixth NOTES sheet documents the two key limitations explicitly rather than hiding them.
+
+Two limitations are clearly documented in the output:
+
+Limitation 1 -- Units: RISA-3D uses feet. SAF requires meters. All node coordinates are automatically converted using 1 ft = 0.3048 m.
+
+Limitation 2 -- Vertical axis: RISA-3D uses Y as the vertical axis. SAF and most receiving software (SCIA, SOFiSTiK, AxisVM) expect Z as vertical. This tool does NOT swap the Y and Z axes automatically, because doing so changes model geometry and is a deliberate engineering decision, not a mechanical conversion. RISA itself requires a Y-to-Z axis change before its own native SAF export for the same reason. The NOTES sheet in the output file explains this clearly for anyone receiving the file.
+
+Loads are not included in this export. SAF supports load transfer, but RISA's load format requires additional parsing not yet implemented.
+
+---
+
+## [1.6.0] - 2025-06
+
+### Added
+
+**Tool 23 -- `add_member`**
+Adds a new member to the model and saves a new `.r3d` file. This is the first tool that can introduce new geometry rather than only modify existing values.
+
+Key design decisions, based on raw format confirmed across two different real project models with completely different geometry:
+
+The NODES section uses scientific notation (e.g. 1.200000000000e+01), a different numeric format from MEMBERS_MAIN_DATA which uses plain decimals. New node lines are written in the correct scientific notation format to match.
+
+Every node line ends in a fixed trailing block (0.000000000000e+00 65535 0 0 -1 -1 0) that was verified identical across 300+ node lines in two unrelated models, so it is treated as a confirmed constant and copied verbatim rather than guessed.
+
+Members reference nodes by their 1-based position in the NODES list, not by label. New nodes are always appended to the end of the NODES block so no existing member's node reference ever shifts position.
+
+New member lines clone the full trailing field structure (orientation and release codes, which vary by member type and are not fully understood) from an existing member of the same type already in the model. If no member of the requested type exists yet, the tool refuses rather than guessing the field structure, and reports which types are available instead.
+
+Header counts are recalculated by actual line count after the edit, never by manual increment, to eliminate off-by-one risk.
+
+Accepts either two existing node labels, or coordinates for one or both new nodes, never an ambiguous mix of both for the same end. Always saves as a new file and never overwrites the original.
+
+### Fixed during development
+
+A double-semicolon bug was caught and fixed before release: the file's quote-aware tokenizer does not separate the trailing semicolon from the final field on a line, so naively reusing a tokenized trailing-fields block and appending another semicolon produced "0;;" in generated node lines. The fix strips the existing trailing semicolon before reassembly. Caught via isolated testing against the real confirmed file format before any user-facing deployment.
+
+---
+
 ## [1.5.0] - 2025-06
 
 ### Added
