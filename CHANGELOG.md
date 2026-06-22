@@ -4,6 +4,21 @@ All notable changes to the RISA-3D MCP Server are documented here.
 
 ---
 
+## [1.8.0] - 2025-06
+
+### Added
+
+**Tool 25 -- `find_duplicate_nodes`**
+Scans all nodes in a model for pairs whose coordinates are within a configurable tolerance of each other (default 0.001 ft, approximately 0.3mm). Duplicate nodes are a common silent corruption: members appear connected in the model view but aren't actually touching, or produce zero-length members that cause wrong analysis results without any obvious warning. The tool reports each duplicate pair with both labels, exact distance, and full coordinates so the engineer can locate and resolve them using RISA's Model Merge tool.
+
+**Tool 26 -- `replace_section_size_in_folder`**
+Applies a section size substitution across every `.r3d` file in a folder in one call. Each file with matches is saved as a new file with a configurable suffix (default `-revised`); files with no matches are skipped without writing anything. Originals are never overwritten. Reports match counts per file and a total replacements summary. Useful for propagating a spec change (e.g. stringer size upgrade) across an entire project folder at once rather than opening each model individually.
+
+**Tool 27 -- `compare_risa_models`**
+Diffs two `.r3d` files and produces a structured change report covering: nodes added, removed, or moved beyond a 0.001 ft coordinate tolerance; members added, removed, or changed in size, type, or connectivity; section sets added, removed, or resized; and load combination count changes. Useful for documenting what changed between design iterations, checking that a revised model only changed what was intended, or producing a change summary for submittal records.
+
+---
+
 ## [1.7.0] - 2025-06
 
 ### Added
