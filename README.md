@@ -63,7 +63,7 @@ This allows engineers to test parsing logic and generate reports without install
 Example:
 
 ```cmd
-node risa-cli.js generate-load-summary "C:\Models\Stair.r3d"
+node risa-cli.js generate-load-summary "C:\Models\TEST.r3d"
 ```
 
 Useful for:
