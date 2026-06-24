@@ -29,10 +29,12 @@ No RISA-3D API is required. This works by reading RISA-3D's plain-text `.r3d` fi
 
 ```text
 risa3d-mcp-server/
-  index.js        # MCP server tools for Claude/Desktop MCP clients
-  risa-core.js    # Shared RISA-3D parsing helpers
-  risa-cli.js     # Local command-line testing/debugging
+  index.js          # MCP server tools
+  risa-core.js      # Shared parsing helpers
+  risa-cli.js       # CLI testing/debugging
   package.json
+  README.md
+  .gitignore
 ```
 
 ---
@@ -49,6 +51,27 @@ It can:
 - Clone a model with controlled changes
 - Run QA/QC checks on RISA models
 - Run CLI diagnostics without Claude/MCP
+
+---
+
+## Use Without Claude
+
+The project includes a standalone command-line interface (`risa-cli.js`).
+
+This allows engineers to test parsing logic and generate reports without installing Claude Desktop or using MCP.
+
+Example:
+
+```cmd
+node risa-cli.js generate-load-summary "C:\Models\Stair.r3d"
+```
+
+Useful for:
+
+- Testing parser changes
+- Verifying load extraction
+- Debugging RISA files
+- Running reports locally
 
 ---
 
@@ -344,7 +367,7 @@ revised: "C:\path\to\model-v2.r3d"
 | `find_members_by_section` | Returns all members assigned a specific section size. Accepts partial, case-insensitive matches (e.g. `"hss8"` matches `"HSS8X8X10"`). If no match, lists all sizes in the model. |
 | `get_deflection_limits` | Returns the deflection limit ratios (L/240, L/360, etc.) defined in both the global deflection rules and member deflection rules. Shows "Not checked" for any category set to -1. |
 | `modify_section_set` | Changes a section size and saves a NEW `.r3d` file (never overwrites the original). Can change the section set definition, specific member assignments, or both. Optional `setName` or `memberLabel` to narrow the change to a single set or member. |
-| `clone_model_with_changes` | Saves a copy of the model with one or more changes applied: section sizes, boundary conditions, and member distributed load magnitudes. Always writes to a new file. Useful for parametric studies and what-if comparisons. |
+| `clone_model_with_changes` | Saves a copy of the model with one or more changes applied: section sizes, boundary conditions, member distributed load magnitudes and node load magnitudes. Always writes to a new file. Useful for parametric studies and what-if comparisons. |
 | `get_material_takeoff` | Returns total weight by section size and a grand total, calculated from AISC shape designations (W/C shapes: number after the X is lb/ft) plus a lookup table for HSS and angle shapes. Sizes not in the table are flagged as unknown rather than guessed, and excluded from the total. |
 | `find_unbraced_length_issues` | Flags members longer than a threshold (default 15 ft, adjustable) for manual review. This is a length screen only -- it does NOT calculate KL/r, apply K-factors, or account for intermediate brace points. Intended to surface candidates for engineering judgment, not to replace it. |
 | `export_member_schedule_to_excel` | Writes the member schedule directly to a real `.xlsx` file at a path you specify, instead of returning CSV text to copy-paste. |
@@ -468,6 +491,42 @@ In your MCP client config, point to:
 node C:\path\to\risa3d-mcp-server\index.js
 ```
 
+## Load Parsing Discovery
+
+During development, it was discovered that RISA-3D does not store the visible Basic Load Case number directly inside load rows.
+
+For example:
+
+```text
+88
+89
+90
+```
+
+appear inside:
+
+- NODE_LOADS
+- DIRECT_DISTRIBUTED_LOADS
+- AREA_LOADS
+
+These values are internal RISA identifiers and should not be interpreted as the visible load case number shown in the RISA interface.
+
+Load ownership is determined using the counts stored in:
+
+```text
+[BASIC_LOAD_CASES]
+```
+
+Specifically:
+
+- Distributed Load Count
+- Area Load Count
+- Node Load Count
+
+The parser walks the load tables sequentially and assigns rows back to the correct Basic Load Case using those counts.
+
+This behavior was validated against actual production RISA-3D models.
+
 ---
 
 ## Safety Notes
@@ -476,6 +535,20 @@ node C:\path\to\risa3d-mcp-server\index.js
 - Use `clone_model_with_changes` with a different `outputPath`.
 - Always open cloned `.r3d` files in RISA-3D and verify the model before using them for design.
 - Write/edit tools should be treated as engineering-assist tools, not final design authority.
+
+---
+
+## Development Workflow
+
+Typical workflow used during development:
+
+1. Add or modify a parser in `risa-core.js`
+2. Test locally using `risa-cli.js`
+3. Validate against a real `.r3d` file
+4. Move the logic into MCP tools in `index.js`
+5. Test again through Claude Desktop
+
+The CLI exists specifically so parser development does not require Claude or MCP during iteration.
 
 ---
 
@@ -574,7 +647,22 @@ Label, Type (e.g. "Wide Flange", "Tube", "Channel", "None"), Size (e.g. "W14X22"
 - [x] Detect duplicate nodes (coordinate tolerance scan)
 - [x] Replace section size globally across a folder of models
 - [x] Diff two model versions (nodes, members, section sets, load combinations)
+- [x] Standalone CLI mode for parser testing
+- [x] Load ownership resolution using Basic Load Case counts
+- [x] Node load editing in cloned models
 
+---
+
+## Known Limitations
+
+Current limitations:
+
+- Area load editing is not supported.
+- Generated transient/memberized loads are read but not regenerated.
+- The server does not run RISA analysis.
+- The server does not run RISA design checks.
+- The server reads and modifies `.r3d` files only.
+- Write operations should always be verified inside RISA-3D before engineering use.
 ---
 
 ## Contributing
