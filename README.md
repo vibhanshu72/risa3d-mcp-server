@@ -25,6 +25,18 @@ No RISA-3D API is required. This works by reading RISA-3D's plain-text `.r3d` fi
 
 ---
 
+### Step 2 -- Download the Project
+
+```bash
+git clone https://github.com/YOUR_USERNAME/risa3d-mcp-server.git
+
+cd risa3d-mcp-server
+
+npm install
+```
+
+---
+
 ## Project Structure
 
 ```text
@@ -51,6 +63,17 @@ It can:
 - Clone a model with controlled changes
 - Run QA/QC checks on RISA models
 - Run CLI diagnostics without Claude/MCP
+
+Currently includes 25+ MCP tools covering:
+
+- Model interrogation
+- QA/QC
+- Load parsing
+- Material takeoffs
+- Excel exports
+- Model comparison
+- Model cloning and modifications
+- SAF export
 
 ---
 
@@ -95,7 +118,7 @@ Once connected, you can ask Claude things like:
 - Windows PC with RISA-3D installed
 - [Claude Desktop](https://claude.ai/download) (free)
 - [Node.js](https://nodejs.org) (LTS version -- free)
-- A Claude account (Pro plan recommended)
+- A Claude account 
 
 ---
 
@@ -114,15 +137,14 @@ Both should return version numbers.
 
 ---
 
-### Step 2 -- Set Up the MCP Server
-
-Open Command Prompt and run these one at a time:
+### Step 2 -- Download the Project
 
 ```bash
-mkdir C:\risa-mcp
-cd C:\risa-mcp
-npm init -y
-npm install @modelcontextprotocol/sdk zod xlsx
+git clone https://github.com/vibhanshu-mishra/risa3d-mcp-server.git
+
+cd risa3d-mcp-server
+
+npm install
 ```
 
 ---
@@ -390,7 +412,7 @@ RISA-3D `.r3d` files do not always store visible load case names directly inside
 90
 ```
 
-These are not necessarily the visible Basic Load Case numbers shown in RISA.
+These are internal RISA load identifiers and should not be assumed to match the visible Basic Load Case numbering shown in the RISA interface.
 
 This project resolves loads using the confirmed RISA pattern:
 
@@ -663,6 +685,7 @@ Current limitations:
 - The server does not run RISA design checks.
 - The server reads and modifies `.r3d` files only.
 - Write operations should always be verified inside RISA-3D before engineering use.
+- Load combinations are currently read but not modified.
 ---
 
 ## Contributing
