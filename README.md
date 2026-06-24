@@ -327,6 +327,7 @@ revised: "C:\path\to\model-v2.r3d"
 | `find_duplicate_nodes` | Scans all nodes for pairs with nearly identical coordinates (default tolerance 0.001 ft, ~0.3mm). Duplicate nodes cause members to appear connected when they aren't, or produce zero-length members that silently corrupt analysis results. Flags pairs by label with exact distance and coordinates. |
 | `replace_section_size_in_folder` | Replaces a section size string across every `.r3d` file in a folder, saving each as a new file with a configurable suffix (never overwrites originals). Useful for applying a spec change across an entire project folder at once. Reports how many replacements were made per file, and skips files with no matches. |
 | `compare_risa_models` | Diffs two `.r3d` files and reports exactly what changed: nodes added, removed, or moved; members added, removed, or changed (size, type, or connectivity); section sets added, removed, or resized; and load combination count changes. Useful for tracking design iterations and documenting changes between submittals. |
+| `generate_load_summary` | Converts RISA's internal load records into a readable summary showing: Basic Load Cases, Area Loads, Member Distributed Loads, Node (Point) Loads |
 
 ---
 
@@ -377,6 +378,7 @@ Label, Type (e.g. "Wide Flange", "Tube", "Channel", "None"), Size (e.g. "W14X22"
 - [x] Detect duplicate nodes (coordinate tolerance scan)
 - [x] Replace section size globally across a folder of models
 - [x] Diff two model versions (nodes, members, section sets, load combinations)
+- [x] Generate load summary (basic load cases, Area Loads, Member Distributed Loads, Node (Point) Loads)
 
 ---
 
