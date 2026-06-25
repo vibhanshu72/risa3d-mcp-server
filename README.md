@@ -25,15 +25,19 @@ No RISA-3D API is required. This works by reading RISA-3D's plain-text `.r3d` fi
 
 ---
 
-### Step 2 -- Download the Project
+## Quick Start
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/risa3d-mcp-server.git
+git clone https://github.com/vibhanshu-mishra/risa3d-mcp-server.git
 
 cd risa3d-mcp-server
 
 npm install
+
+node risa-cli.js help
 ```
+
+For Claude Desktop integration, continue to the Installation section below.
 
 ---
 
@@ -68,12 +72,12 @@ Currently includes 25+ MCP tools covering:
 
 - Model interrogation
 - QA/QC
-- Load parsing
+- Load parsing & Validation
 - Material takeoffs
-- Excel exports
+- SAF and Excel exports
 - Model comparison
-- Model cloning and modifications
-- SAF export
+- Model cloning and editing
+- CLI Debugging Toolkit
 
 ---
 
@@ -146,50 +150,9 @@ cd risa3d-mcp-server
 
 npm install
 ```
-
 ---
 
-### Step 3 -- Create the Server File
-
-In Command Prompt, run:
-```
-notepad index.js
-```
-
-Click **Yes** when asked to create a new file. Paste in the contents of `index.js` from this repository, then save and close.
-
----
-
-### Step 4 -- Update package.json
-
-In Command Prompt, run:
-```
-notepad package.json
-```
-
-Add `"type": "module"` so it looks like this:
-
-```json
-{
-  "name": "risa-mcp",
-  "version": "1.0.0",
-  "main": "index.js",
-  "type": "module",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "zod": "^3.0.0"
-  }
-}
-```
-
-Save and close.
-
----
-
-### Step 5 -- Test the Server
+### Step 3 -- Test the Server
 
 In Command Prompt, run:
 ```
@@ -201,7 +164,7 @@ If you see a blinking cursor with no errors -- it is working. Press **Ctrl+C** t
 
 ---
 
-### Step 6 -- Connect to Claude Desktop
+### Step 4 -- Connect to Claude Desktop
 
 1. Install [Claude Desktop](https://claude.ai/download) if you haven't already
 2. Press **Windows + R**, type `%APPDATA%\Claude` and press Enter
@@ -213,7 +176,9 @@ If you see a blinking cursor with no errors -- it is working. Press **Ctrl+C** t
   "mcpServers": {
     "risa3d": {
       "command": "node",
-      "args": ["C:\\risa-mcp\\index.js"]
+      "args": [
+        "C:\\path\\to\\risa3d-mcp-server\\index.js"
+      ]
     }
   }
 }
@@ -225,7 +190,7 @@ If you see a blinking cursor with no errors -- it is working. Press **Ctrl+C** t
 
 ---
 
-### Step 7 -- Verify It's Running
+### Step 5 -- Verify It's Running
 
 In Claude Desktop:
 1. Click the **+** button in the chat input box
