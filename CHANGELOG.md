@@ -4,6 +4,98 @@ All notable changes to the RISA-3D MCP Server are documented here.
 
 ---
 
+## [1.9.0] - 2026-06
+
+### Added
+
+**Standalone CLI (`risa-cli.js`)**
+
+Introduced a standalone command-line interface for local testing and development without requiring Claude Desktop or an MCP client. Engineers can now run tools directly against `.r3d` files for debugging and parser validation.
+
+Supported commands include:
+
+- `generate-load-summary`
+- `debug-load-case-counts`
+- `debug-load-membership`
+- `debug-load-structure`
+- `debug-member-load-rows`
+
+This significantly improves the development workflow by allowing parser changes to be validated independently of MCP.
+
+**Shared parser library (`risa-core.js`)**
+
+Extracted common parsing logic from `index.js` into a shared module used by both the MCP server and CLI.
+
+This removes duplicated parsing logic and ensures that both interfaces produce identical results.
+
+Shared helpers include:
+
+- quote-aware tokenizer
+- node parsing
+- member parsing
+- basic load case parsing
+- load ownership resolution
+- common geometry helpers
+
+### Changed
+
+**Tool 12 — `summarize_model_for_report`**
+
+The load summary was completely rewritten.
+
+Instead of relying on the internal load IDs stored inside:
+
+- `[NODE_LOADS]`
+- `[DIRECT_DISTRIBUTED_LOADS]`
+- `[AREA_LOADS]`
+
+The tool now reconstructs load ownership using the counts stored in:
+
+```
+[BASIC_LOAD_CASES]
+```
+
+Loads are now reported using the visible RISA Basic Load Case names (DL, LL, WLx, WLz, etc.) rather than internal identifiers.
+
+This behavior was validated against multiple production RISA-3D models.
+
+**Tool 18 — `clone_model_with_changes`**
+
+Added support for editing node load magnitudes in addition to:
+
+- section sizes
+- boundary conditions
+- member distributed loads
+
+The tool continues to write only new models and never overwrites the source file.
+
+### Fixed
+
+**Load case resolution**
+
+Discovered that values such as:
+
+```
+88
+89
+90
+```
+
+Inside the load sections are internal RISA identifiers rather than the visible Basic Load Case numbers.
+
+Implemented deterministic load ownership reconstruction using the load counts recorded in `[BASIC_LOAD_CASES]`.
+
+This fixes incorrect reporting of load cases in generated summaries.
+
+### Internal
+
+- Split parser logic into reusable modules.
+- Reduced code duplication between the CLI and the MCP server.
+- Added CLI-based parser debugging workflow.
+- Improved maintainability for future tools.
+
+---
+
 ## [1.8.0] - 2025-06
 
 ### Added
