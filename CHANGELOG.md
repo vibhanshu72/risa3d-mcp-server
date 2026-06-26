@@ -4,7 +4,7 @@ All notable changes to the RISA-3D MCP Server are documented here.
 
 ---
 
-## [1.9.0] - 2026-06
+## [2.0.0] - 2026-06
 
 ### Added
 
