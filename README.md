@@ -2,12 +2,13 @@
 
 > Connect Claude AI to your RISA-3D structural models using the Model Context Protocol (MCP).
 
-Built by a structural engineer, for structural engineers. This MCP server lets you talk to your `.r3d` files in plain English, no coding required after setup.
+Built by a structural engineer to bring AI-assisted workflows to RISA-3D. This MCP server lets you talk to your `.r3d` files in plain English, no coding required after setup.
 
 ![Node](https://img.shields.io/badge/Node.js-18+-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-purple)
+![Version](https://img.shields.io/badge/version-v2.1.0-blue)
 
 ---
 
@@ -56,6 +57,36 @@ For Claude Desktop integration, continue to the Installation section below.
 
 ---
 
+## Table of Contents
+
+- Why This Project Exists
+- What Is This?
+- Quick Start
+- Installation
+- Architecture
+- Available Tools
+- Example Prompts
+- CLI Usage
+- Technical Notes
+- Regression Tests
+- Roadmap
+- Known Limitations
+- License
+
+---
+
+## Architecture
+
+                 Claude Desktop
+                       │
+                 MCP (index.js)
+                       │
+                  risa-core.js
+                  /       \
+            risa-cli.js  .r3d files
+
+---
+
 ## Project Structure
 
 ```text
@@ -80,22 +111,6 @@ risa3d-mcp-server/
 ├── README.md
 └── CHANGELOG.md
 ```
-
----
-
-## Architecture
-
-                 Claude Desktop
-                       │
-                MCP Server (index.js)
-                       │
-        ┌──────────────┴──────────────┐
-        │                             │
-     risa-core.js                 risa-cli.js
-        │
-     .r3d parser
-        │
-     RISA files
 
 ---
 
@@ -203,7 +218,7 @@ npm install
 
 In Command Prompt, run:
 ```
-cd C:\risa-mcp
+cd risa3d-mcp-server
 node index.js
 ```
 
@@ -581,52 +596,13 @@ Run the full suite:
 node tests\run-all.js
 ```
 
----
+Current coverage:
 
-## Recommended GitHub Files
-
-Do commit:
-
-```text
-index.js
-risa-core.js
-risa-cli.js
-package.json
-package-lock.json
-README.md
-CHANGELOG.md
-.gitignore
-tests/test-utils.js
-tests/parser.test.js
-tests/loads.test.js
-tests/qc.test.js
-tests/write-tools.test.js
-tests/geometry.test.js
-tests/run-tests.js
-tests/run-all.js
-```
-
-Do not commit:
-
-```text
-*.r3d
-*.xlsx
-node_modules/
-temporary test models
-client project files
-```
-
-Add this to `.gitignore`:
-
-```gitignore
-node_modules/
-*.r3d
-*.xlsx
-*.xls
-*.csv
-.DS_Store
-.env
-```
+- Parser
+- Load ownership
+- Geometry helpers
+- QC engine
+- Write helpers
 
 ---
 
