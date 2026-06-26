@@ -1,0 +1,30 @@
+name: Regression Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Syntax check
+        run: |
+          node --check index.js
+          node --check risa-core.js
+          node --check risa-cli.js
+
+      - name: Run regression suite
+        run: node tests\run-all.js
