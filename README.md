@@ -69,8 +69,7 @@ risa3d-mcp-server/
 ├── risa-cli.js
 │
 ├── tests/
-│   ├── fixtures/
-│   ├── output/
+│   
 │   ├── parser.test.js
 │   ├── loads.test.js
 │   ├── qc.test.js
