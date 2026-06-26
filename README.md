@@ -265,178 +265,234 @@ Or go to **Settings -> Developer** and confirm risa3d shows as **running**.
 
 ## Example Prompts
 
-Once connected, open a new chat in Claude Desktop and try:
+### Model Reading
 
 ```
 Summarize this model for a report:
-"C:\path\to\your\model.r3d"
+"C:\path\to\model.r3d"
 ```
 
 ```
-What steel materials are defined in this model?
-"C:\path\to\your\model.r3d"
+List all the members in this model.
 ```
 
 ```
-List the boundary conditions for this model:
-"C:\path\to\your\model.r3d"
+List all Wide Flange members only.
 ```
 
 ```
-What section sets are defined in this model?
-"C:\path\to\your\model.r3d"
+What materials are defined in this model?
 ```
 
 ```
-List all the members in this RISA-3D model:
-"C:\path\to\your\model.r3d"
+What section sets are defined?
 ```
 
 ```
-List all Wide Flange members in full detail:
-"C:\path\to\your\model.r3d" mode="full" filterType="Wide Flange"
+List the boundary conditions.
 ```
 
 ```
-Export a member schedule for Tube members only:
-"C:\path\to\your\model.r3d" filterType="Tube"
-```
-
-```
-Compare these two RISA-3D models and tell me what changed:
-"C:\path\to\model-v1.r3d" and "C:\path\to\model-v2.r3d"
-```
-
-```
-Run a QC check on this model:
-"C:\path\to\your\model.r3d"
-```
-
-```
-Summarize all models in this folder:
-"D:\Projects\MISC STEEL\2026\My Project\Design"
-```
-
-```
-Summarize all models in this folder whose name contains "stair":
-"D:\Projects\MISC STEEL\2026\My Project\Design"
-```
-
-```
-What basic load cases are defined in this model?
-"C:\path\to\your\model.r3d"
-```
-
-```
-Find all members using HSS8X8X10 in this model:
-"C:\path\to\your\model.r3d"
-```
-
-```
-What are the deflection limits set in this model?
-"C:\path\to\your\model.r3d"
-```
-
-```
-Change the Stringer section set from C15X33.9 to C12X20.7 and save as a new model:
-"C:\path\to\your\model.r3d" -> "C:\path\to\your\model-revised.r3d"
-```
-
-```
-Clone this model with member M41 changed to HSS6X6X10 and node N5 changed to pinned, save as a new file:
-"C:\path\to\your\model.r3d" -> "C:\path\to\your\model-v2.r3d"
-```
-
-```
-Give me a material takeoff for this model:
-"C:\path\to\your\model.r3d"
-```
-
-```
-Flag any members over 20 feet for unbraced length review:
-"C:\path\to\your\model.r3d"
-```
-
-```
-Export the member schedule to an Excel file:
-"C:\path\to\your\model.r3d" -> "C:\Users\you\Desktop\schedule.xlsx"
-```
-
-```
-Add a brace between N5 and N6 using HSS4X4X4, save as a new model:
-"C:\path\to\your\model.r3d" -> "C:\path\to\your\model-braced.r3d"
-```
-
-```
-Add a new HSS4X4X4 brace from node N44 to a new point at (6.0, 0.0, -12.0), save as a new model:
-"C:\path\to\your\model.r3d" -> "C:\path\to\your\model-braced.r3d"
-```
-
-```
-Export this model to SAF format for use in SCIA Engineer:
-"C:\path\to\your\model.r3d" -> "C:\Users\you\Desktop\model.xlsx"
-```
-
-```
-Check this model for duplicate nodes:
-"C:\path\to\your\model.r3d"
-```
-
-```
-Replace C15X33.9 with C12X20.7 across all models in this folder:
-"D:\Projects\2026\MyProject\Design"
-```
-
-```
-Show me what changed between these two model versions:
-base: "C:\path\to\model-v1.r3d"
-revised: "C:\path\to\model-v2.r3d"
+What load combinations are defined?
 ```
 
 ---
 
-## Available Tools
+### QA / QC
+
+```
+Run a QC check on this model.
+```
+
+```
+Check this model for duplicate nodes.
+```
+
+```
+Find all members using HSS8X8X10.
+```
+
+```
+Flag members longer than 20 feet.
+```
+
+```
+Compare these two models and summarize the differences.
+```
+
+```
+Show every member connected to M41.
+```
+
+```
+Show every member connected to node N25.
+```
+
+---
+
+### Editing
+
+```
+Change the Stringer section set from C15X33.9 to C12X20.7 and save as a new model.
+```
+
+```
+Clone this model and change member M41 to HSS6X6X10.
+```
+
+```
+Move node N44 to new coordinates.
+```
+
+```
+Delete members M20 through M25.
+```
+
+```
+Copy member M41 between N200 and N205.
+```
+
+```
+Split member M41 at 50% of its length.
+```
+
+```
+Merge members M41 and M42.
+```
+
+---
+
+### Geometry
+
+```
+Mirror these members about the Y-axis.
+```
+
+```
+Copy these members 20 feet in the X direction.
+```
+
+```
+Add a brace between N44 and a new point at (6,0,-12).
+```
+
+---
+
+### Batch Processing
+
+```
+Summarize every model in this folder.
+```
+
+```
+Replace C15X33.9 with C12X20.7 across all models in this folder.
+```
+
+```
+Run QC on every model in this folder and export an Excel summary.
+```
+
+---
+
+### Export
+
+```
+Export the member schedule to Excel.
+```
+
+```
+Export the load summary to Excel.
+```
+
+```
+Export this model to SAF format.
+```
+
+```
+Generate a material takeoff.
+```
+
+```
+Export every HSS member to a schedule.
+```
+
+---
+
+---
+
+## MCP Tools
+
+### Model Reading & Reporting
 
 | Tool | Description |
 |---|---|
-| `read_risa_model` | Reads a `.r3d` file and returns a project summary (title, node count, member count, plate count, file size) |
-| `list_members` | Returns a type breakdown summary by default (token-efficient). Use `mode="full"` for full CSV detail. Optional `filterType` (e.g., `"Tube"`, `"Wide Flange"`) to narrow results. |
-| `list_nodes` | Lists all nodes with their X, Y, Z coordinates |
-| `list_load_combinations` | Lists all load combinations defined in the model |
-| `get_file_section` | Returns the raw contents of any named section in the file (e.g., NODES, MEMBERS, BOUNDARY_CONDITIONS) |
-| `compare_risa_models` | Compares two `.r3d` files and reports differences in nodes, member sizes/connectivity, section sets, and load combinations |
-| `export_member_schedule` | Generates a member schedule as CSV (label, type, size, nodes, length). Optional `filterType` to export one section type. Optional `maxRows` cap (default 200). |
-| `qc_check_risa_model` | Checks for duplicate nodes, duplicate member labels, missing section sizes, zero-length members, and invalid node references |
-| `get_model_materials` | Lists all HR and CF steel materials defined in the model with Grade, E, Fy, and Fu values |
-| `get_boundary_conditions` | Lists all support conditions with node labels, constraint codes (Fixed/Free/Pinned), and plain-English descriptions |
-| `get_section_sets` | Lists all named section sets and their assigned types and sizes |
-| `summarize_model_for_report` | Single-call summary combining project info, nodes, members, section sets, materials, boundary conditions, load combinations, area loads, distributed loads, and point loads -- ready to paste into a calculation package |
-| `batch_summarize_folder` | Scans a folder for all `.r3d` files and returns a CSV summary table (file name, title, designer, node count, member count, section sets, load combos, file size, QC status). Optional `filterName` parameter to match specific file names. |
-| `get_load_cases` | Lists all basic load cases defined in the model with their index, name, and load type (Gravity, Seismic, Wind, etc.) |
-| `find_members_by_section` | Returns all members assigned a specific section size. Accepts partial, case-insensitive matches (e.g., `"hss8"` matches `"HSS8X8X10"`). If no match, lists all sizes in the model. |
-| `get_deflection_limits` | Returns the deflection limit ratios (L/240, L/360, etc.) defined in both the global deflection rules and member deflection rules. Shows "Not checked" for any category set to -1. |
-| `modify_section_set` | Changes a section size and saves a NEW `.r3d` file (never overwrites the original). Can change the section set definition, specific member assignments, or both. Optional `setName` or `memberLabel` to narrow the change to a single set or member. |
-| `clone_model_with_changes` | Saves a copy of the model with one or more changes applied: section sizes, boundary conditions, member distributed load magnitudes, and node load magnitudes. Always writes to a new file. Useful for parametric studies and what-if comparisons. |
-| `get_material_takeoff` | Returns total weight by section size and a total, calculated from AISC shape designations (W/C shapes: number after the X is lb/ft) plus a lookup table for HSS and angle shapes. Sizes not in the table are flagged as unknown rather than guessed and excluded from the total. |
-| `find_unbraced_length_issues` | Flags members longer than a threshold (default 15 ft, adjustable) for manual review. This is a length screen only -- it does NOT calculate KL/r, apply K-factors, or account for intermediate brace points. Intended to surface candidates for engineering judgment, not to replace it. |
-| `export_member_schedule_to_excel` | Writes the member schedule directly to a real `.xlsx` file at a path you specify, instead of returning CSV text to copy-paste. |
-| `batch_summarize_folder_to_excel` | Writes the batch folder summary directly to a real `.xlsx` file. Same data as `batch_summarize_folder`, saved as an actual spreadsheet. |
-| `add_member` | Adds a new member to the model and saves a NEW `.r3d` file. Connects to two existing nodes (by label) or creates new nodes at given coordinates, always appended to the end of the model, so no existing member's node references shift. Clones the field structure from an existing member of the same type to avoid guessing internal RISA codes. Requires at least one existing member of the target type already in the model. |
-| `export_to_saf` | Exports a RISA-3D model to SAF format (`.xlsx`), the open exchange standard used by SCIA Engineer, SOFiSTiK, AxisVM, and other structural analysis software. Produces five sheets: StructuralMaterial, StructuralCrossSection, StructuralPointConnection, StructuralCurveMember, StructuralPointSupport, plus a NOTES sheet documenting two key limitations: (1) coordinates are converted from feet to meters, and (2) RISA's Y-vertical axis is NOT swapped to Z-vertical -- the receiving engineer must handle axis orientation. Loads are not included in this export. |
-| `find_duplicate_nodes` | Scans all nodes for pairs with nearly identical coordinates (default tolerance 0.001 ft, ~0.3 mm). Duplicate nodes cause members to appear connected when they aren't, or produce zero-length members that silently corrupt analysis results. Flags pairs by label with exact distance and coordinates. |
-| `replace_section_size_in_folder` | Replaces a section size string across every `.r3d` file in a folder, saving each as a new file with a configurable suffix (never overwrites originals). Useful for applying a spec change across an entire project folder at once. Reports how many replacements were made per file and skips files with no matches. |
-| `batch_replace_section_size` | Applies multiple section size replacements in one model and saves a new `.r3d` file. |
-| `batch_qc_folder` | Runs QC checks across every `.r3d` file in a folder and writes one Excel summary. |
-| `export_load_summary_to_excel` | Exports load summaries to Excel with separate sheets for Summary, Distributed Loads, Area Loads, and Node Loads. |
-| `move_node` | Moves an existing node by updating its coordinates and saving a new `.r3d` file. |
-| `delete_member` | Deletes one or more members by label and saves a new `.r3d` file. |
-| `find_connected_members` | Given a member label, lists all members connected at its i-node and j-node. |
-| `get_member_connectivity_at_node` | Given a node label, lists every member connected to that node. |
-| `copy_member` | Copies an existing member’s full field structure and reconnects it between two existing nodes. |
-| `split_member` | Splits one member into two by inserting a new node along its length. |
-| `merge_members` | Merges two compatible members that share one common node into one member. |
-| `mirror_geometry` | Mirrors selected members by creating mirrored copies and reusing or creating nodes as needed. |
-| `copy_translate_geometry` | Copies selected members and translates the copied geometry by X/Y/Z offsets. |
+| `read_risa_model` | Reads a `.r3d` file and returns a project summary (title, node count, member count, plate count, file size). |
+| `summarize_model_for_report` | Single-call report including project info, members, nodes, materials, supports, loads, and load combinations. |
+| `list_members` | Lists members by type or full detail with optional filtering. |
+| `list_nodes` | Lists all nodes with coordinates. |
+| `get_file_section` | Returns the raw contents of any named `.r3d` section. |
+| `get_model_materials` | Lists all defined steel materials and properties. |
+| `get_boundary_conditions` | Returns all support conditions with plain-English descriptions. |
+| `get_section_sets` | Lists section sets and assigned member sizes. |
+| `get_load_cases` | Lists all basic load cases. |
+| `list_load_combinations` | Lists all load combinations. |
+| `get_deflection_limits` | Returns global and member deflection rules. |
+
+---
+
+### QA / QC
+
+| Tool | Description |
+|---|---|
+| `qc_check_risa_model` | Runs common QA/QC checks. |
+| `find_duplicate_nodes` | Finds duplicate nodes within a coordinate tolerance. |
+| `find_members_by_section` | Finds all members using a specified section size. |
+| `find_unbraced_length_issues` | Flags members exceeding a user-defined length threshold. |
+| `find_connected_members` | Lists all members connected to a specified member. |
+| `get_member_connectivity_at_node` | Lists all members connected to a specified node. |
+| `compare_risa_models` | Compares two `.r3d` models and summarizes differences. |
+
+---
+
+### Editing Tools
+
+| Tool | Description |
+|---|---|
+| `modify_section_set` | Changes section sizes and saves a new model. |
+| `clone_model_with_changes` | Creates a modified copy of a model with section, support, or load changes. |
+| `add_member` | Adds a new member using existing or newly created nodes. |
+| `move_node` | Moves an existing node. |
+| `delete_member` | Deletes one or more members. |
+| `copy_member` | Copies an existing member between two nodes. |
+| `split_member` | Splits one member into two. |
+| `merge_members` | Merges two compatible members into one. |
+| `mirror_geometry` | Mirrors selected geometry. |
+| `copy_translate_geometry` | Copies geometry using XYZ offsets. |
+
+---
+
+### Batch Tools
+
+| Tool | Description |
+|---|---|
+| `batch_summarize_folder` | Summarizes every model in a folder. |
+| `batch_summarize_folder_to_excel` | Writes folder summaries directly to Excel. |
+| `replace_section_size_in_folder` | Replaces one section size across every model in a folder. |
+| `batch_replace_section_size` | Performs multiple section replacements in one model. |
+| `batch_qc_folder` | Runs QC checks across an entire folder and exports an Excel summary. |
+
+---
+
+### Export Tools
+
+| Tool | Description |
+|---|---|
+| `export_member_schedule` | Exports member schedules as CSV. |
+| `export_member_schedule_to_excel` | Writes member schedules directly to Excel. |
+| `export_load_summary_to_excel` | Writes load summaries directly to Excel. |
+| `export_to_saf` | Exports the model to SAF (`.xlsx`) format. |
+
+---
 
 ---
 
