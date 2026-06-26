@@ -4,6 +4,75 @@ All notable changes to the RISA-3D MCP Server are documented here.
 
 ---
 
+## [2.1.0] - 2026-06
+
+### Added
+
+**Expanded geometry editing tools**
+
+Added model geometry editing tools:
+
+- `move_node`
+- `delete_member`
+- `find_connected_members`
+- `get_member_connectivity_at_node`
+- `copy_member`
+- `split_member`
+- `merge_members`
+- `mirror_geometry`
+- `copy_translate_geometry`
+
+These tools save new `.r3d` files and never overwrite the original model.
+
+**Batch and Excel tools**
+
+Added:
+
+- `batch_replace_section_size`
+- `batch_qc_folder`
+- `export_load_summary_to_excel`
+
+These support multi-model QC, section replacement workflows, and load review deliverables.
+
+**Regression test suite**
+
+Added a modular regression suite under `tests/`:
+
+- `parser.test.js`
+- `loads.test.js`
+- `qc.test.js`
+- `write-tools.test.js`
+- `geometry.test.js`
+- `run-all.js`
+
+The suite validates parser behavior, load ownership parsing, QC helpers, write helpers, and geometry helper logic.
+
+### Changed
+
+**Geometry helper refactor**
+
+Moved shared geometry helper logic into `risa-core.js`, including:
+
+- `padRISA`
+- `formatSciNotation`
+- `generateUnusedLabel`
+- `getNodesSection`
+- `getMembersSection`
+- `getTrailingNodeFields`
+- `buildNodeLine`
+- `rebuildNodesSection`
+- `rebuildMembersSection`
+- `findOrCreateNodeForGeometry`
+
+This reduces duplicated logic in the MCP tools and makes future write tools safer to build.
+
+### Fixed
+
+- Removed duplicated geometry helper logic from `mirror_geometry` and `copy_translate_geometry`.
+- Added regression coverage to catch parser and helper regressions before future releases.
+
+---
+
 ## [2.0.0] - 2026-06
 
 ### Added
