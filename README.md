@@ -5,11 +5,8 @@
 Built by a structural engineer, for structural engineers. This MCP server lets you talk to your `.r3d` files in plain English, no coding required after setup.
 
 ![Node](https://img.shields.io/badge/Node.js-18+-green)
-
 ![License](https://img.shields.io/badge/license-MIT-blue)
-
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
-
 ![MCP](https://img.shields.io/badge/MCP-Compatible-purple)
 
 ---
